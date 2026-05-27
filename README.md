@@ -2,9 +2,11 @@
 
 ## What TraceBack Is
 
-TraceBack is an evidence-validation application for AI-assisted digital forensics and incident response. It is designed to check whether AI-generated claims about user activity are actually supported by forensic evidence, then correct, contradict, downgrade, or retract unsupported findings.
+TraceBack is an evidence-validation application for AI-assisted digital forensics and incident response. It checks whether AI-generated claims about user activity are actually supported by forensic evidence, then corrects, contradicts, downgrades, or retracts unsupported findings.
 
 The project uses Hermes Agent with ChatGPT as an alternative agentic harness, with local validation logic and normalized forensic evidence as the grounding layer.
+
+In plain terms: TraceBack is designed to make an AI forensic assistant show its work, admit when it is wrong, and point back to the evidence that justified the correction.
 
 ## Starter Validation Goal
 
@@ -53,11 +55,15 @@ The next evidence type being added after the MVP is registry / removable-device 
 
 ## Why This Scope
 
-The current scope is intentionally narrow enough to be explainable and testable, but broad enough to demonstrate meaningful validation across multiple evidence types. The goal is not to replace SIFT or every forensic parser. The goal is to prove a credible self-correcting validation loop.
+The current scope is intentionally narrow enough to be explainable and testable, but broad enough to demonstrate meaningful validation across multiple evidence types. The goal is not to replace SIFT or every forensic parser. The goal is to prove a credible self-correcting validation loop with traceable evidence.
+
+## Why This Matters
+
+Many AI-assisted forensic workflows can produce confident but unsupported claims. TraceBack focuses on the correction step: checking those claims against evidence and producing an audit-friendly result instead of asking the user to trust a black box.
 
 ## Repository Status
 
-This repository currently contains planning, architecture, evidence, and demo-preparation materials for the TraceBack MVP.
+This repository currently contains the planning, architecture, evidence, and demo-preparation materials for the TraceBack MVP.
 
 ## Related Notes
 
