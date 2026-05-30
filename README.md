@@ -20,9 +20,9 @@ Validate whether AI-generated claims about user activity are accurate across thr
 
 ## Starter Claim Set
 
-- Logon claim: Allie successfully logged in at 10:15. Expected result: corrected.
-- Process claim: Allie successfully opened Disk Management. Expected result: contradicted.
-- Browser claim: Allie did not download the NIST PDF. Expected result: contradicted.
+- Logon claim: addie_smith successfully logged in at 10:15. Expected result: corrected.
+- Process claim: addie_smith successfully opened Disk Management. Expected result: contradicted.
+- Browser claim: addie_smith did not download the NIST PDF. Expected result: contradicted.
 
 ## How the MVP Works
 
