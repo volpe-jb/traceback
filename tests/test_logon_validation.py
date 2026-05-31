@@ -8,9 +8,9 @@ from traceback_app.report.markdown import results_to_markdown
 from traceback_app.validators.logon import validate_logon_claims
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-SOURCE_DATA = Path("/mnt/c/Users/Brandi Volpe/Markdown vaults/Find Evil Lab/Data created")
-EVENTS_PATH = SOURCE_DATA / "windows_logon_events.synthetic.json"
-CLAIMS_PATH = SOURCE_DATA / "windows_logon_claims.synthetic.json"
+FIXTURE_DATA = PROJECT_ROOT / "tests" / "fixtures" / "small"
+EVENTS_PATH = FIXTURE_DATA / "windows_logon_events.synthetic.json"
+CLAIMS_PATH = FIXTURE_DATA / "windows_logon_claims.synthetic.json"
 
 
 def _results_by_claim_id():

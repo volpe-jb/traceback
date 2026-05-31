@@ -14,7 +14,9 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-DEFAULT_DATA_DIR = Path("/mnt/c/Users/Brandi Volpe/Markdown vaults/Find Evil Lab/Data created")
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_INPUT_DIR = REPO_ROOT / "tests" / "fixtures" / "small"
+DEFAULT_OUTPUT_DIR = REPO_ROOT / "tests" / "fixtures" / "large"
 DEFAULT_SEED = 20260531
 
 LOGON_EVENTS = "windows_logon_events.synthetic.json"
@@ -30,8 +32,8 @@ LARGE_PREFETCH_CLAIMS = "windows_prefetch_process_claims.large.synthetic.json"
 
 def generate_all(
     *,
-    input_dir: str | Path = DEFAULT_DATA_DIR,
-    output_dir: str | Path = DEFAULT_DATA_DIR,
+    input_dir: str | Path = DEFAULT_INPUT_DIR,
+    output_dir: str | Path = DEFAULT_OUTPUT_DIR,
     logon_noise_count: int = 250,
     prefetch_noise_count: int = 250,
     seed: int = DEFAULT_SEED,
@@ -233,8 +235,8 @@ def _write_json(path: Path, records: list[dict[str, Any]]) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate noisy synthetic TraceBack fixture files.")
-    parser.add_argument("--input-dir", default=str(DEFAULT_DATA_DIR), help="Directory containing small base fixture files.")
-    parser.add_argument("--output-dir", default=str(DEFAULT_DATA_DIR), help="Directory to write large noisy fixture files.")
+    parser.add_argument("--input-dir", default=str(DEFAULT_INPUT_DIR), help="Directory containing small base fixture files.")
+    parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Directory to write large noisy fixture files.")
     parser.add_argument("--logon-noise-count", type=int, default=250, help="Number of logon noise records to add.")
     parser.add_argument("--prefetch-noise-count", type=int, default=250, help="Number of Prefetch process noise records to add.")
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="Deterministic random seed.")

@@ -6,8 +6,10 @@ from traceback_app.evidence.loaders import load_json_records
 from traceback_app.validators.logon import validate_logon_claims
 from traceback_app.validators.prefetch_process import validate_prefetch_process_claims
 
-SOURCE_DATA = Path("/mnt/c/Users/Brandi Volpe/Markdown vaults/Find Evil Lab/Data created")
-GENERATOR_PATH = Path(__file__).resolve().parents[1] / "scripts" / "generate_noisy_synthetic_data.py"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SOURCE_DATA = PROJECT_ROOT / "tests" / "fixtures" / "small"
+LARGE_FIXTURE_DATA = PROJECT_ROOT / "tests" / "fixtures" / "large"
+GENERATOR_PATH = PROJECT_ROOT / "scripts" / "generate_noisy_synthetic_data.py"
 
 
 def _load_generator():
@@ -32,14 +34,44 @@ def test_noisy_fixture_generator_keeps_base_claim_outcomes_inside_larger_files(t
         prefetch_noise_count=75,
     )
 
-    logon_events = load_json_records(generated["logon_events"])
-    logon_claims = load_json_records(generated["logon_claims"])
-    prefetch_events = load_json_records(generated["prefetch_events"])
-    prefetch_claims = load_json_records(generated["prefetch_claims"])
+    _assert_large_fixture_outcomes(
+        logon_events_path=generated["logon_events"],
+        logon_claims_path=generated["logon_claims"],
+        prefetch_events_path=generated["prefetch_events"],
+        prefetch_claims_path=generated["prefetch_claims"],
+        expected_logon_events=83,
+        expected_prefetch_events=79,
+    )
 
-    assert len(logon_events) == 83
+
+def test_committed_large_fixtures_keep_base_claim_outcomes():
+    _assert_large_fixture_outcomes(
+        logon_events_path=LARGE_FIXTURE_DATA / "windows_logon_events.large.synthetic.json",
+        logon_claims_path=LARGE_FIXTURE_DATA / "windows_logon_claims.large.synthetic.json",
+        prefetch_events_path=LARGE_FIXTURE_DATA / "windows_prefetch_process_events.large.synthetic.json",
+        prefetch_claims_path=LARGE_FIXTURE_DATA / "windows_prefetch_process_claims.large.synthetic.json",
+        expected_logon_events=258,
+        expected_prefetch_events=254,
+    )
+
+
+def _assert_large_fixture_outcomes(
+    *,
+    logon_events_path: Path,
+    logon_claims_path: Path,
+    prefetch_events_path: Path,
+    prefetch_claims_path: Path,
+    expected_logon_events: int,
+    expected_prefetch_events: int,
+):
+    logon_events = load_json_records(logon_events_path)
+    logon_claims = load_json_records(logon_claims_path)
+    prefetch_events = load_json_records(prefetch_events_path)
+    prefetch_claims = load_json_records(prefetch_claims_path)
+
+    assert len(logon_events) == expected_logon_events
     assert len(logon_claims) == 4
-    assert len(prefetch_events) == 79
+    assert len(prefetch_events) == expected_prefetch_events
     assert len(prefetch_claims) == 4
 
     logon_event_ids = {event["event_uid"] for event in logon_events}

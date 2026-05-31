@@ -1,0 +1,57 @@
+[
+  {
+    "claim_id": "claim-logon-001",
+    "claim_type": "windows_logon",
+    "claim_text": "addie_smith logged on interactively to WIN-FORENSIC-01 at 2026-05-20T14:03:22Z.",
+    "account": "addie_smith",
+    "host": "WIN-FORENSIC-01",
+    "timestamp_utc": "2026-05-20T14:03:22Z",
+    "expected_event_action": "logon_success",
+    "expected_logon_type": 2,
+    "expected_logon_type_label": "Interactive",
+    "expected_validation_status": "supported",
+    "synthetic": true
+  },
+  {
+    "claim_id": "claim-logon-002",
+    "claim_type": "windows_logon",
+    "claim_text": "addie_smith logged on interactively to WIN-FORENSIC-01 at 2026-05-20T15:44:03Z.",
+    "account": "addie_smith",
+    "host": "WIN-FORENSIC-01",
+    "timestamp_utc": "2026-05-20T15:44:03Z",
+    "expected_event_action": "logon_success",
+    "expected_logon_type": 2,
+    "expected_logon_type_label": "Interactive",
+    "expected_validation_status": "contradicted",
+    "synthetic": true,
+    "notes": "Evidence at this time is a successful Network logon, not an Interactive console logon."
+  },
+  {
+    "claim_id": "claim-logon-003",
+    "claim_type": "windows_logon",
+    "claim_text": "addie_smith successfully logged on interactively to WIN-FORENSIC-01 at 2026-05-21T09:12:44Z.",
+    "account": "addie_smith",
+    "host": "WIN-FORENSIC-01",
+    "timestamp_utc": "2026-05-21T09:12:44Z",
+    "expected_event_action": "logon_success",
+    "expected_logon_type": 2,
+    "expected_logon_type_label": "Interactive",
+    "expected_validation_status": "contradicted",
+    "synthetic": true,
+    "notes": "Evidence at this time is an Interactive logon failure, not a success."
+  },
+  {
+    "claim_id": "claim-logon-004",
+    "claim_type": "windows_logon",
+    "claim_text": "addie_smith logged on interactively to WIN-FORENSIC-01 at 2026-05-23T18:30:00Z.",
+    "account": "addie_smith",
+    "host": "WIN-FORENSIC-01",
+    "timestamp_utc": "2026-05-23T18:30:00Z",
+    "expected_event_action": "logon_success",
+    "expected_logon_type": 2,
+    "expected_logon_type_label": "Interactive",
+    "expected_validation_status": "insufficient_evidence",
+    "synthetic": true,
+    "notes": "No synthetic event exists for this account/time/host."
+  }
+]

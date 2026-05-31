@@ -7,9 +7,10 @@ from traceback_app.evidence.loaders import load_json_records
 from traceback_app.report.markdown import results_to_markdown
 from traceback_app.validators.prefetch_process import validate_prefetch_process_claims
 
-SOURCE_DATA = Path("/mnt/c/Users/Brandi Volpe/Markdown vaults/Find Evil Lab/Data created")
-EVENTS_PATH = SOURCE_DATA / "windows_prefetch_process_events.synthetic.json"
-CLAIMS_PATH = SOURCE_DATA / "windows_prefetch_process_claims.synthetic.json"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+FIXTURE_DATA = PROJECT_ROOT / "tests" / "fixtures" / "small"
+EVENTS_PATH = FIXTURE_DATA / "windows_prefetch_process_events.synthetic.json"
+CLAIMS_PATH = FIXTURE_DATA / "windows_prefetch_process_claims.synthetic.json"
 
 
 def _results_by_claim_id():
