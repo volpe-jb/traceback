@@ -239,3 +239,9 @@ Planning/
 /Rules and Requirements/Contest Requirements Summary.md
 /Rules and Requirements/Official Rules Copy.md
 /VM Setup/VM Lab Plan.md
+
+# Local-only Obsidian workspace/config files not published to GitHub
+/.obsidian/app.json
+/.obsidian/appearance.json
+/.obsidian/core-plugins.json
+/.obsidian/workspace.json
