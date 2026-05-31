@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from collections.abc import Callable
 from pathlib import Path
 
 from traceback_app.claims.schema import ValidationResult
-from traceback_app.evidence.loaders import load_json_records
+from traceback_app.evidence.loaders import SourceDataError, load_json_records
 from traceback_app.report.json_report import results_to_json
 from traceback_app.report.markdown import results_to_markdown
 from traceback_app.validators.logon import validate_logon_claims
@@ -62,8 +63,14 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     validator, markdown_title, report_type = VALIDATORS[args.validator]
-    events = load_json_records(args.events)
-    claims = load_json_records(args.claims)
+    try:
+        events = load_json_records(args.events)
+        claims = load_json_records(args.claims)
+    except SourceDataError as exc:
+        print("Could not load source data.", file=sys.stderr)
+        print(str(exc), file=sys.stderr)
+        return 2
+
     results = validator(claims, events)
 
     print(results_to_markdown(results, title=markdown_title))
