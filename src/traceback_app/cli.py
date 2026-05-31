@@ -8,7 +8,15 @@ from collections.abc import Callable
 from pathlib import Path
 
 from traceback_app.claims.schema import ValidationResult
-from traceback_app.evidence.loaders import SourceDataError, load_json_records
+from traceback_app.evidence.loaders import (
+    LOGON_CLAIM_SCHEMA,
+    LOGON_EVENT_SCHEMA,
+    PREFETCH_PROCESS_CLAIM_SCHEMA,
+    PREFETCH_PROCESS_EVENT_SCHEMA,
+    RecordSchema,
+    SourceDataError,
+    load_json_records,
+)
 from traceback_app.report.json_report import results_to_json
 from traceback_app.report.markdown import results_to_markdown
 from traceback_app.validators.logon import validate_logon_claims
@@ -16,16 +24,22 @@ from traceback_app.validators.prefetch_process import validate_prefetch_process_
 
 ValidatorFn = Callable[[list[dict[str, object]], list[dict[str, object]]], list[ValidationResult]]
 
-VALIDATORS: dict[str, tuple[ValidatorFn, str, str]] = {
+ValidatorConfig = tuple[ValidatorFn, str, str, RecordSchema, RecordSchema]
+
+VALIDATORS: dict[str, ValidatorConfig] = {
     "logon": (
         validate_logon_claims,
         "TraceBack Windows Logon Validation Summary",
         "traceback_windows_logon_validation",
+        LOGON_EVENT_SCHEMA,
+        LOGON_CLAIM_SCHEMA,
     ),
     "prefetch-process": (
         validate_prefetch_process_claims,
         "TraceBack Prefetch Process Validation Summary",
         "traceback_windows_prefetch_process_validation",
+        PREFETCH_PROCESS_EVENT_SCHEMA,
+        PREFETCH_PROCESS_CLAIM_SCHEMA,
     ),
 }
 
@@ -62,10 +76,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    validator, markdown_title, report_type = VALIDATORS[args.validator]
+    validator, markdown_title, report_type, event_schema, claim_schema = VALIDATORS[args.validator]
     try:
-        events = load_json_records(args.events)
-        claims = load_json_records(args.claims)
+        events = load_json_records(args.events, schema=event_schema)
+        claims = load_json_records(args.claims, schema=claim_schema)
     except SourceDataError as exc:
         print("Could not load source data.", file=sys.stderr)
         print(str(exc), file=sys.stderr)

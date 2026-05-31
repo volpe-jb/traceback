@@ -1,0 +1,20 @@
+[
+  {
+    "event_uid": "synthetic-logon-0001",
+    "event_type": "windows_logon",
+    "host": "WIN-FORENSIC-01",
+    "timestamp_utc": "2026-05-20T14:03:22Z",
+    "event_id": 4624,
+    "event_action": "logon_success",
+    "account": "addie_smith"
+  },
+  {
+    "event_uid": "synthetic-logon-0001",
+    "event_type": "windows_logon",
+    "host": "WIN-FORENSIC-01",
+    "timestamp_utc": "2026-05-20T15:03:22Z",
+    "event_id": 4624,
+    "event_action": "logon_success",
+    "account": "addie_smith"
+  }
+]
