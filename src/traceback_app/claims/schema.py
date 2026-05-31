@@ -25,6 +25,9 @@ class ValidationResult:
     status: ValidationStatus
     explanation: str
     evidence_references: list[dict[str, Any]] = field(default_factory=list)
+    expected_values: dict[str, Any] = field(default_factory=dict)
+    observed_values: list[dict[str, Any]] = field(default_factory=list)
+    contradiction_reason: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable representation of this result."""
@@ -36,4 +39,7 @@ class ValidationResult:
             "status": self.status.value,
             "explanation": self.explanation,
             "evidence_references": self.evidence_references,
+            "expected_values": self.expected_values,
+            "observed_values": self.observed_values,
+            "contradiction_reason": self.contradiction_reason,
         }
