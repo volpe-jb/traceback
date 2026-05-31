@@ -5,10 +5,12 @@ from __future__ import annotations
 from traceback_app.claims.schema import ValidationResult, ValidationStatus
 
 
-def results_to_markdown(results: list[ValidationResult]) -> str:
+def results_to_markdown(
+    results: list[ValidationResult], *, title: str = "TraceBack Windows Logon Validation Summary"
+) -> str:
     """Return a compact Markdown-style validation summary."""
 
-    lines = ["# TraceBack Windows Logon Validation Summary", ""]
+    lines = [f"# {title}", ""]
     for result in results:
         lines.extend(
             [
@@ -28,7 +30,7 @@ def results_to_markdown(results: list[ValidationResult]) -> str:
             if result.evidence_references:
                 lines.append("- Evidence references:")
                 for reference in result.evidence_references:
-                    lines.append("  - " + _format_evidence_reference(reference, separator="="))
+                    lines.append("  - " + _format_inline_evidence_reference(reference, separator="="))
         lines.append("")
     return "\n".join(lines)
 
@@ -38,25 +40,14 @@ def _contradicted_result_lines(result: ValidationResult) -> list[str]:
         "- Claim checked:",
         f"  - {result.claim_text}",
         "- What the claim expected:",
-        f"  - expected_event_action: {result.expected_values.get('event_action')}",
-        f"  - expected_logon_type: {result.expected_values.get('logon_type')}",
-        f"  - expected_logon_type_label: {result.expected_values.get('logon_type_label')}",
-        "- What the evidence shows:",
     ]
 
+    for key, value in result.expected_values.items():
+        lines.append(f"  - expected_{key}: {value}")
+
+    lines.append("- What the evidence shows:")
     for reference in result.evidence_references:
-        lines.extend(
-            [
-                f"  - event_uid: {reference.get('event_uid')}",
-                f"    event_id: {reference.get('event_id')}",
-                f"    timestamp_utc: {reference.get('timestamp_utc')}",
-                f"    account: {reference.get('account')}",
-                f"    host: {reference.get('host')}",
-                f"    event_action: {reference.get('event_action')}",
-                f"    logon_type: {reference.get('logon_type')}",
-                f"    logon_type_label: {reference.get('logon_type_label')}",
-            ]
-        )
+        lines.extend(_format_block_evidence_reference(reference))
 
     lines.extend(
         [
@@ -69,14 +60,16 @@ def _contradicted_result_lines(result: ValidationResult) -> list[str]:
     return lines
 
 
-def _format_evidence_reference(reference: dict[str, object], *, separator: str) -> str:
-    return (
-        f"event_uid{separator}{reference.get('event_uid')}, "
-        f"event_id{separator}{reference.get('event_id')}, "
-        f"timestamp_utc{separator}{reference.get('timestamp_utc')}, "
-        f"account{separator}{reference.get('account')}, "
-        f"host{separator}{reference.get('host')}, "
-        f"event_action{separator}{reference.get('event_action')}, "
-        f"logon_type{separator}{reference.get('logon_type')} "
-        f"({reference.get('logon_type_label')})"
-    )
+def _format_block_evidence_reference(reference: dict[str, object]) -> list[str]:
+    lines: list[str] = []
+    for index, (key, value) in enumerate(reference.items()):
+        prefix = "  -" if index == 0 else "   "
+        lines.append(f"{prefix} {key}: {value}")
+    return lines
+
+
+def _format_inline_evidence_reference(reference: dict[str, object], *, separator: str) -> str:
+    parts = []
+    for key, value in reference.items():
+        parts.append(f"{key}{separator}{value}")
+    return ", ".join(parts)
