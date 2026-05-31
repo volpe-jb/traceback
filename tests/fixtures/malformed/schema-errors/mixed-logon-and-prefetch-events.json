@@ -1,0 +1,20 @@
+[
+  {
+    "event_uid": "synthetic-logon-mixed-0001",
+    "event_type": "windows_logon",
+    "host": "WIN-FORENSIC-01",
+    "timestamp_utc": "2026-05-20T14:03:22Z",
+    "event_id": 4624,
+    "event_action": "logon_success",
+    "account": "addie_smith"
+  },
+  {
+    "event_uid": "synthetic-prefetch-mixed-0002",
+    "event_type": "windows_prefetch_process_execution",
+    "host": "WIN-FORENSIC-01",
+    "timestamp_utc": "2026-05-20T14:08:10Z",
+    "event_action": "process_executed",
+    "account": "addie_smith",
+    "process_name": "notepad.exe"
+  }
+]

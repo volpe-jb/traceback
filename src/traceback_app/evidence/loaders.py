@@ -139,17 +139,14 @@ def load_json_records(path: str | Path, *, schema: RecordSchema | None = None) -
     try:
         data = json.loads(text)
     except JSONDecodeError as exc:
-        detail = f"Could not parse JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}."
-        if _looks_incomplete_json_error(exc):
-            detail += " The file appears incomplete, as if an export/copy operation did not finish writing."
+        detail = _build_json_parse_detail(text, exc)
         raise SourceDataError(source_path, "Could not parse JSON", detail) from exc
 
     if not isinstance(data, list):
-        raise SourceDataError(
-            source_path,
-            "Could not load source data",
-            f"Expected a JSON array of records, but found {_json_type_name(data)}.",
-        )
+        detail = f"Expected a JSON array of records, but found {_json_type_name(data)}."
+        if _looks_like_error_payload(data):
+            detail += " This looks like an error payload, not evidence records."
+        raise SourceDataError(source_path, "Could not load source data", detail)
 
     for index, item in enumerate(data, start=1):
         if not isinstance(item, dict):
@@ -299,6 +296,18 @@ def _read_source_text(source_path: Path) -> str:
         ) from exc
 
 
+def _build_json_parse_detail(text: str, exc: JSONDecodeError) -> str:
+    detail = f"Could not parse JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}."
+    stripped = text.lstrip()
+    if stripped.startswith(("<html", "<!doctype html", "<HTML", "<!DOCTYPE html")):
+        return detail + " The file looks like HTML, such as a web error page or wrong file saved with a .json extension."
+    if stripped and not stripped.startswith(("[", "{")):
+        return detail + " The file looks like plain text, not JSON records; check whether the wrong file was selected or an export error was saved."
+    if _looks_incomplete_json_error(exc):
+        detail += " The file appears incomplete, as if an export/copy operation did not finish writing."
+    return detail
+
+
 def _looks_incomplete_json_error(exc: JSONDecodeError) -> bool:
     incomplete_markers = (
         "expecting value",
@@ -307,6 +316,10 @@ def _looks_incomplete_json_error(exc: JSONDecodeError) -> bool:
         "expecting ',' delimiter",
     )
     return exc.msg.lower() in incomplete_markers
+
+
+def _looks_like_error_payload(data: object) -> bool:
+    return isinstance(data, dict) and any(key in data for key in ("error", "errors", "message", "detail", "details"))
 
 
 def _json_type_name(value: object) -> str:
