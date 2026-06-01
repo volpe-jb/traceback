@@ -3,16 +3,30 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
 
-# Virtual environments
+# Virtual environments and local environment files
 .venv/
 venv/
-.env/
+env/
+ENV/
+.env
+.env.*
+!.env.example
+.envrc
 
 # Build/package artifacts
 *.egg-info/
 build/
 dist/
+.eggs/
+wheels/
+*.egg
+MANIFEST
 
 # Generated local reports
 validation_report*.json
@@ -23,3 +37,11 @@ reports/
 Thumbs.db
 .vscode/
 .idea/
+
+# Local notebook/runtime noise
+.ipynb_checkpoints/
+.cache/
+
+# Local-only Obsidian/workspace files if this repo is opened from a vault
+.obsidian/workspace.json
+/.obsidian/workspace.json
