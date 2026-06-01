@@ -1,10 +1,10 @@
 # TraceBack: Evidence Validation for AI-Assisted DFIR
 
-TraceBack is a local-first Python CLI experiment for checking AI-style forensic claims against normalized evidence records.
+TraceBack is a local-first Python experiment for checking AI-style forensic claims against normalized evidence records.
 
 The goal is simple: if an AI assistant says something happened, TraceBack checks whether the evidence supports it, contradicts it, or does not contain enough information to prove it.
 
-This CLI version focuses on deterministic validation that can run without API keys, cloud services, or an LLM. Agent/LLM workflows can be added around it later, but the validation core should remain independently testable.
+The current app keeps deterministic validation at the center. The CLI is the reproducible workflow door, and the optional Streamlit GUI is a thin review/demo door over the same local validation path. Agent/LLM workflows can be added around it later, but the validation core should remain independently testable and runnable without API keys.
 
 ## Current MVP scope
 
@@ -30,18 +30,20 @@ For each claim, TraceBack returns one of three validation statuses:
 - `contradicted` — matching evidence exists, but it conflicts with the claim
 - `insufficient_evidence` — no matching evidence was found for the claim
 
-The CLI prints a Markdown report by default and can also print a JSON report with `--print-json`.
+The CLI prints a Markdown report by default and can also print a JSON report with `--print-json`. The Streamlit GUI can view or download the same kind of validation report for the bundled demo case.
 
 ## Repository layout
 
 ```text
 src/traceback_app/          Core app package
 src/traceback_app/cli.py    CLI entry point
+src/traceback_app/gui/      Thin Streamlit GUI adapter layer
 src/traceback_app/validators/
                             Evidence-type validators
 tests/                      Automated tests
 tests/fixtures/             Small, large, malformed, and diverse fixtures
 scripts/                    Deterministic fixture-generation scripts
+streamlit_app.py            Streamlit review/demo GUI entry point
 ```
 
 ## Requirements
@@ -49,7 +51,7 @@ scripts/                    Deterministic fixture-generation scripts
 - Python 3.10+
 - `uv` for the test commands shown below
 
-The project has no runtime package dependencies at the moment. Tests use `pytest` through `uv`.
+Runtime dependencies are managed in `pyproject.toml`. The optional review/demo GUI uses Streamlit. Tests use `pytest` through `uv`.
 
 ## Run the tests
 
@@ -62,7 +64,7 @@ UV_LINK_MODE=copy uv run --with pytest pytest -q
 Expected current result:
 
 ```text
-63 passed
+68 passed
 ```
 
 To run only the diverse synthetic fixture tests:
@@ -92,6 +94,38 @@ logon
 prefetch-process
 browser-activity
 ```
+
+## Run the Streamlit review GUI
+
+The Streamlit GUI is a judge-friendly review/demo interface, not a replacement for the deterministic CLI or validation core.
+
+From the repo root:
+
+```bash
+UV_LINK_MODE=copy uv run streamlit run streamlit_app.py
+```
+
+Then open the local URL Streamlit prints, usually:
+
+```text
+http://localhost:8501
+```
+
+GUI v0 currently lets you:
+
+- select the small synthetic demo bundle
+- view the original claim
+- run deterministic validation
+- review evidence checks grouped by type:
+  - Logon evidence
+  - Process execution evidence
+  - Browser activity evidence
+- view `supported`, `contradicted`, and plain-language `unsupported` labels
+- review compact evidence provenance when sidecar metadata is available
+- expand the full sidecar metadata JSON
+- view or download Markdown and JSON validation reports
+
+The GUI does not call an LLM, does not require an API key, and does not implement the future AI reviewer loop.
 
 ## Diverse synthetic fixtures
 
@@ -147,18 +181,60 @@ Normalized JSON is the working validation format. It is not a replacement for th
 
 For browser activity, the current source-artifact path is Chromium/Edge-style History SQLite data with `urls` and `visits` tables. Other browser formats should be handled by browser-specific extractors later.
 
+## Evidence provenance and sidecar metadata
+
+When a converter/parser creates normalized TraceBack JSON, it can also create a sidecar `.metadata.json` file beside the normalized records. This keeps the plain JSON records simple while preserving traceability back to the source artifact.
+
+Current browser demo example:
+
+```text
+tests/fixtures/small/browser_activity.synthetic.sqlite
+tests/fixtures/small/browser_activity_events.synthetic.json
+tests/fixtures/small/browser_activity_events.synthetic.metadata.json
+```
+
+The sidecar metadata records fields such as:
+
+```text
+source_artifact
+source_sha256
+normalized_file
+normalized_sha256
+artifact_type
+parser_tool
+parser_tool_version
+parser_output
+parser_output_sha256
+record_count
+```
+
+Important: `source_sha256` and `normalized_sha256` are expected to be different because the source artifact and normalized JSON are different files. The point is not to prove the files are identical; the point is to document the chain:
+
+```text
+source artifact hash
+        -> parser/extractor details
+        -> normalized JSON hash
+        -> validation report
+```
+
+Report behavior:
+
+- Markdown reports include an `Evidence provenance` section when sidecar metadata is supplied.
+- JSON reports include an `evidence_provenance` object when sidecar metadata is supplied.
+- The Streamlit GUI shows compact provenance for evidence groups that have sidecar metadata and provides an expandable full metadata JSON view.
+
 ## Future scope
 
 Planned future work includes:
 
 - Firefox history support through a `places.sqlite` extractor
 - registry / removable-device evidence, likely using RegRipper output
-- stronger provenance reporting from raw artifact to parser output to normalized record
+- broader provenance reporting across all evidence types, from raw artifact to parser output to normalized record
 - a formal evidence-package wrapper that can carry metadata and records together
 - optional agent/LLM workflow around the deterministic validation core
 
 ## Current status
 
-This repo contains the CLI validation core, deterministic fixtures, fixture generators, and automated tests for the current MVP validation path.
+This repo contains the CLI validation core, optional Streamlit review GUI, deterministic fixtures, fixture generators, and automated tests for the current MVP validation path.
 
 No API keys are required for the core tests or CLI validation examples.

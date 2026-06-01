@@ -86,6 +86,7 @@ class EvidenceGroupReport:
     results: list[ValidationResult]
     markdown_report: str
     json_report: str
+    provenance_metadata: Mapping[str, object] | None = None
 
 
 @dataclass(frozen=True)
@@ -232,6 +233,7 @@ def _validate_evidence_group(config: EvidenceGroupConfig) -> EvidenceGroupReport
         key=config.key,
         label=config.label,
         results=results,
+        provenance_metadata=provenance_metadata,
         markdown_report=results_to_markdown(
             results,
             title=config.markdown_title,
@@ -281,6 +283,11 @@ def _combined_json_report(
                     "label": report.label,
                     "result_count": len(report.results),
                     "results": [result.to_dict() for result in report.results],
+                    **(
+                        {"evidence_provenance": dict(report.provenance_metadata)}
+                        if report.provenance_metadata is not None
+                        else {}
+                    ),
                 }
                 for key, report in group_reports.items()
             },

@@ -6,6 +6,9 @@ Run with:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Any
+
 from traceback_app.claims.schema import ValidationResult
 from traceback_app.gui.adapters import (
     SAMPLE_CASES,
@@ -77,11 +80,42 @@ def _render_grouped_results(st: object, report: ValidationReport) -> None:
     st.subheader("Evidence checks by type")
     for group_report in report.groups.values():
         with st.expander(group_report.label, expanded=True):
+            _render_provenance_summary(st, group_report.provenance_metadata)
             for result in group_report.results:
                 _render_result(st, result)
 
 
-def _render_result(st: object, result: ValidationResult) -> None:
+def _render_provenance_summary(
+    st: Any, provenance_metadata: Mapping[str, object] | None
+) -> None:
+    if provenance_metadata is None:
+        st.caption("No sidecar provenance metadata is attached for this evidence group yet.")
+        return
+
+    st.markdown("**Evidence provenance**")
+    source_hash = str(provenance_metadata.get("source_sha256", ""))
+    normalized_hash = str(provenance_metadata.get("normalized_sha256", ""))
+    st.write(f"Source artifact: `{provenance_metadata.get('source_artifact')}`")
+    st.write(f"Source SHA-256: `{_short_hash(source_hash)}`")
+    st.write(f"Normalized records: `{provenance_metadata.get('normalized_file')}`")
+    st.write(f"Normalized SHA-256: `{_short_hash(normalized_hash)}`")
+    st.write(
+        "Parser/extractor: "
+        f"`{provenance_metadata.get('parser_tool')}` "
+        f"version `{provenance_metadata.get('parser_tool_version')}`"
+    )
+    st.write(f"Records: `{provenance_metadata.get('record_count')}`")
+    with st.expander("View full provenance metadata", expanded=False):
+        st.json(provenance_metadata, expanded=True)
+
+
+def _short_hash(value: str) -> str:
+    if len(value) <= 16:
+        return value
+    return f"{value[:8]}...{value[-8:]}"
+
+
+def _render_result(st: Any, result: ValidationResult) -> None:
     status_label = display_status_label(result.status)
     st.markdown(f"### {result.claim_id}: `{status_label}`")
     st.write(result.claim_text)
@@ -93,11 +127,11 @@ def _render_result(st: object, result: ValidationResult) -> None:
 
     if result.expected_values:
         st.markdown("**Expected values**")
-        st.json(result.expected_values, expanded=False)
+        st.json(result.expected_values, expanded=True)
 
     if result.observed_values:
         st.markdown("**Observed values**")
-        st.json(result.observed_values, expanded=False)
+        st.json(result.observed_values, expanded=True)
 
     if result.evidence_references:
         st.markdown("**Evidence references**")
