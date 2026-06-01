@@ -158,8 +158,10 @@ def _plain_english_mismatch(claim: dict[str, Any], event: dict[str, Any]) -> str
 
     if expected_action == "process_executed" and observed_action == "prefetch_absent":
         return (
-            "Prefetch-style evidence did not show process execution for the matching "
-            "account, host, and timestamp."
+            "A matching normalized Prefetch record exists for this account, host, "
+            "and timestamp, but it records event_action=prefetch_absent instead of "
+            "process_executed. Because the evidence directly conflicts with the claim, "
+            "TraceBack marks this as contradicted rather than unsupported."
         )
 
     if _casefold(expected_process) != _casefold(observed_process):

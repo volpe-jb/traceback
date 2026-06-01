@@ -50,7 +50,8 @@ def test_prefetch_absent_when_execution_was_claimed_returns_contradicted():
     assert result.status == ValidationStatus.CONTRADICTED
     assert result.evidence_references[0]["event_action"] == "prefetch_absent"
     assert result.expected_values["event_action"] == "process_executed"
-    assert "Prefetch-style evidence did not show process execution" in result.contradiction_reason
+    assert "matching normalized Prefetch record exists" in result.contradiction_reason
+    assert "contradicted rather than unsupported" in result.contradiction_reason
 
 
 def test_claim_with_no_matching_prefetch_process_event_returns_insufficient_evidence():

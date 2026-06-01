@@ -44,6 +44,31 @@ ValidatorFn = Callable[[list[dict[str, Any]], list[dict[str, Any]]], list[Valida
 
 
 @dataclass(frozen=True)
+class EvidenceTypeConfig:
+    """Stable validation settings for one evidence type."""
+
+    key: str
+    label: str
+    validator: ValidatorFn
+    event_schema: RecordSchema
+    claim_schema: RecordSchema
+    markdown_title: str
+    report_type: str
+
+
+@dataclass(frozen=True)
+class EvidenceDatasetOption:
+    """Selectable event/claim file pair for one evidence type."""
+
+    key: str
+    name: str
+    description: str
+    events_path: Path
+    claims_path: Path
+    metadata_path: Path | None = None
+
+
+@dataclass(frozen=True)
 class EvidenceGroupConfig:
     """Fixture and validator configuration for one evidence type."""
 
@@ -101,6 +126,176 @@ class ValidationReport:
     corrected_claim: str | None = None
 
 
+EVIDENCE_TYPE_CONFIGS: dict[str, EvidenceTypeConfig] = {
+    "logon": EvidenceTypeConfig(
+        key="logon",
+        label=EVIDENCE_TYPE_LABELS["logon"],
+        validator=validate_logon_claims,
+        event_schema=LOGON_EVENT_SCHEMA,
+        claim_schema=LOGON_CLAIM_SCHEMA,
+        markdown_title="TraceBack Windows Logon Validation Summary",
+        report_type="traceback_windows_logon_validation",
+    ),
+    "prefetch-process": EvidenceTypeConfig(
+        key="prefetch-process",
+        label=EVIDENCE_TYPE_LABELS["prefetch-process"],
+        validator=validate_prefetch_process_claims,
+        event_schema=PREFETCH_PROCESS_EVENT_SCHEMA,
+        claim_schema=PREFETCH_PROCESS_CLAIM_SCHEMA,
+        markdown_title="TraceBack Prefetch Process Validation Summary",
+        report_type="traceback_windows_prefetch_process_validation",
+    ),
+    "browser-activity": EvidenceTypeConfig(
+        key="browser-activity",
+        label=EVIDENCE_TYPE_LABELS["browser-activity"],
+        validator=validate_browser_activity_claims,
+        event_schema=BROWSER_ACTIVITY_EVENT_SCHEMA,
+        claim_schema=BROWSER_ACTIVITY_CLAIM_SCHEMA,
+        markdown_title="TraceBack Browser Activity Validation Summary",
+        report_type="traceback_browser_activity_validation",
+    ),
+}
+
+DATASET_OPTIONS: dict[str, dict[str, EvidenceDatasetOption]] = {
+    "logon": {
+        "small-synthetic": EvidenceDatasetOption(
+            key="small-synthetic",
+            name="Small synthetic logon data",
+            description="Small deterministic Windows logon event and claim pair.",
+            events_path=PROJECT_ROOT / "tests/fixtures/small/windows_logon_events.synthetic.json",
+            claims_path=PROJECT_ROOT / "tests/fixtures/small/windows_logon_claims.synthetic.json",
+        ),
+        "large-synthetic": EvidenceDatasetOption(
+            key="large-synthetic",
+            name="Large noisy synthetic logon data",
+            description="Larger Windows logon event and claim pair for noisy review testing.",
+            events_path=PROJECT_ROOT / "tests/fixtures/large/windows_logon_events.large.synthetic.json",
+            claims_path=PROJECT_ROOT / "tests/fixtures/large/windows_logon_claims.large.synthetic.json",
+        ),
+        "diverse-small-zero-supported": EvidenceDatasetOption(
+            key="diverse-small-zero-supported",
+            name="Diverse small logon data: zero supported",
+            description="Generated logon case with supported claims intentionally absent.",
+            events_path=PROJECT_ROOT
+            / "tests/fixtures/diverse/windows_logon_events.small.zero-supported-5-0-3-2.json",
+            claims_path=PROJECT_ROOT
+            / "tests/fixtures/diverse/windows_logon_claims.small.zero-supported-5-0-3-2.json",
+        ),
+        "diverse-large-zero-insufficient": EvidenceDatasetOption(
+            key="diverse-large-zero-insufficient",
+            name="Diverse large logon data: zero insufficient",
+            description="Generated logon case with insufficient-evidence claims intentionally absent.",
+            events_path=PROJECT_ROOT
+            / "tests/fixtures/diverse/windows_logon_events.large.zero-insufficient-24-9-15-0.json",
+            claims_path=PROJECT_ROOT
+            / "tests/fixtures/diverse/windows_logon_claims.large.zero-insufficient-24-9-15-0.json",
+        ),
+    },
+    "prefetch-process": {
+        "small-synthetic": EvidenceDatasetOption(
+            key="small-synthetic",
+            name="Small synthetic Prefetch data",
+            description="Small deterministic Prefetch process event and claim pair.",
+            events_path=PROJECT_ROOT
+            / "tests/fixtures/small/windows_prefetch_process_events.synthetic.json",
+            claims_path=PROJECT_ROOT
+            / "tests/fixtures/small/windows_prefetch_process_claims.synthetic.json",
+        ),
+        "large-synthetic": EvidenceDatasetOption(
+            key="large-synthetic",
+            name="Large noisy synthetic Prefetch data",
+            description="Larger Prefetch process event and claim pair for noisy review testing.",
+            events_path=PROJECT_ROOT
+            / "tests/fixtures/large/windows_prefetch_process_events.large.synthetic.json",
+            claims_path=PROJECT_ROOT
+            / "tests/fixtures/large/windows_prefetch_process_claims.large.synthetic.json",
+        ),
+        "diverse-small-zero-contradicted": EvidenceDatasetOption(
+            key="diverse-small-zero-contradicted",
+            name="Diverse small Prefetch data: zero contradicted",
+            description="Generated Prefetch case with contradicted claims intentionally absent.",
+            events_path=PROJECT_ROOT
+            / "tests/fixtures/diverse/windows_prefetch_process_execution_events.small.zero-contradicted-6-2-0-4.json",
+            claims_path=PROJECT_ROOT
+            / "tests/fixtures/diverse/windows_prefetch_process_execution_claims.small.zero-contradicted-6-2-0-4.json",
+        ),
+        "diverse-large-zero-supported": EvidenceDatasetOption(
+            key="diverse-large-zero-supported",
+            name="Diverse large Prefetch data: zero supported",
+            description="Generated Prefetch case with supported claims intentionally absent.",
+            events_path=PROJECT_ROOT
+            / "tests/fixtures/diverse/windows_prefetch_process_execution_events.large.zero-supported-30-0-12-18.json",
+            claims_path=PROJECT_ROOT
+            / "tests/fixtures/diverse/windows_prefetch_process_execution_claims.large.zero-supported-30-0-12-18.json",
+        ),
+    },
+    "browser-activity": {
+        "small-synthetic": EvidenceDatasetOption(
+            key="small-synthetic",
+            name="Small synthetic browser data",
+            description="Small deterministic browser activity event and claim pair.",
+            events_path=PROJECT_ROOT / "tests/fixtures/small/browser_activity_events.synthetic.json",
+            claims_path=PROJECT_ROOT / "tests/fixtures/small/browser_activity_claims.synthetic.json",
+            metadata_path=PROJECT_ROOT
+            / "tests/fixtures/small/browser_activity_events.synthetic.metadata.json",
+        ),
+        "large-synthetic": EvidenceDatasetOption(
+            key="large-synthetic",
+            name="Large noisy synthetic browser data",
+            description="Larger browser activity event and claim pair for noisy review testing.",
+            events_path=PROJECT_ROOT
+            / "tests/fixtures/large/browser_activity_events.large.synthetic.json",
+            claims_path=PROJECT_ROOT
+            / "tests/fixtures/large/browser_activity_claims.large.synthetic.json",
+            metadata_path=PROJECT_ROOT
+            / "tests/fixtures/large/browser_activity_events.large.synthetic.metadata.json",
+        ),
+        "diverse-small-mixed": EvidenceDatasetOption(
+            key="diverse-small-mixed",
+            name="Diverse small browser data: mixed outcomes",
+            description="Generated browser case with supported, contradicted, and insufficient outcomes.",
+            events_path=PROJECT_ROOT
+            / "tests/fixtures/diverse/browser_activity_events.small.mixed-4-1-2-1.json",
+            claims_path=PROJECT_ROOT
+            / "tests/fixtures/diverse/browser_activity_claims.small.mixed-4-1-2-1.json",
+        ),
+        "diverse-large-zero-insufficient": EvidenceDatasetOption(
+            key="diverse-large-zero-insufficient",
+            name="Diverse large browser data: zero insufficient",
+            description="Generated browser case with insufficient-evidence claims intentionally absent.",
+            events_path=PROJECT_ROOT
+            / "tests/fixtures/diverse/browser_activity_events.large.zero-insufficient-40-16-24-0.json",
+            claims_path=PROJECT_ROOT
+            / "tests/fixtures/diverse/browser_activity_claims.large.zero-insufficient-40-16-24-0.json",
+        ),
+    },
+}
+
+
+def dataset_option_display_label(option: EvidenceDatasetOption) -> str:
+    """Return a Streamlit-friendly label showing paired evidence and claim files."""
+
+    return f"Evidence: {option.events_path.name}  |  Claims: {option.claims_path.name}"
+
+
+def _evidence_group_config(
+    evidence_type_key: str, dataset_option: EvidenceDatasetOption
+) -> EvidenceGroupConfig:
+    evidence_type = EVIDENCE_TYPE_CONFIGS[evidence_type_key]
+    return EvidenceGroupConfig(
+        key=evidence_type.key,
+        label=evidence_type.label,
+        validator=evidence_type.validator,
+        events_path=dataset_option.events_path,
+        claims_path=dataset_option.claims_path,
+        event_schema=evidence_type.event_schema,
+        claim_schema=evidence_type.claim_schema,
+        markdown_title=evidence_type.markdown_title,
+        report_type=evidence_type.report_type,
+        metadata_path=dataset_option.metadata_path,
+    )
+
+
 SAMPLE_CASES: dict[str, SampleCase] = {
     "small-synthetic-demo": SampleCase(
         key="small-synthetic-demo",
@@ -116,42 +311,16 @@ SAMPLE_CASES: dict[str, SampleCase] = {
         ),
         evidence_bundle=EvidenceBundle(
             groups={
-                "logon": EvidenceGroupConfig(
-                    key="logon",
-                    label=EVIDENCE_TYPE_LABELS["logon"],
-                    validator=validate_logon_claims,
-                    events_path=PROJECT_ROOT / "tests/fixtures/small/windows_logon_events.synthetic.json",
-                    claims_path=PROJECT_ROOT / "tests/fixtures/small/windows_logon_claims.synthetic.json",
-                    event_schema=LOGON_EVENT_SCHEMA,
-                    claim_schema=LOGON_CLAIM_SCHEMA,
-                    markdown_title="TraceBack Windows Logon Validation Summary",
-                    report_type="traceback_windows_logon_validation",
+                "logon": _evidence_group_config(
+                    "logon", DATASET_OPTIONS["logon"]["small-synthetic"]
                 ),
-                "prefetch-process": EvidenceGroupConfig(
-                    key="prefetch-process",
-                    label=EVIDENCE_TYPE_LABELS["prefetch-process"],
-                    validator=validate_prefetch_process_claims,
-                    events_path=PROJECT_ROOT
-                    / "tests/fixtures/small/windows_prefetch_process_events.synthetic.json",
-                    claims_path=PROJECT_ROOT
-                    / "tests/fixtures/small/windows_prefetch_process_claims.synthetic.json",
-                    event_schema=PREFETCH_PROCESS_EVENT_SCHEMA,
-                    claim_schema=PREFETCH_PROCESS_CLAIM_SCHEMA,
-                    markdown_title="TraceBack Prefetch Process Validation Summary",
-                    report_type="traceback_windows_prefetch_process_validation",
+                "prefetch-process": _evidence_group_config(
+                    "prefetch-process",
+                    DATASET_OPTIONS["prefetch-process"]["small-synthetic"],
                 ),
-                "browser-activity": EvidenceGroupConfig(
-                    key="browser-activity",
-                    label=EVIDENCE_TYPE_LABELS["browser-activity"],
-                    validator=validate_browser_activity_claims,
-                    events_path=PROJECT_ROOT / "tests/fixtures/small/browser_activity_events.synthetic.json",
-                    claims_path=PROJECT_ROOT / "tests/fixtures/small/browser_activity_claims.synthetic.json",
-                    event_schema=BROWSER_ACTIVITY_EVENT_SCHEMA,
-                    claim_schema=BROWSER_ACTIVITY_CLAIM_SCHEMA,
-                    markdown_title="TraceBack Browser Activity Validation Summary",
-                    report_type="traceback_browser_activity_validation",
-                    metadata_path=PROJECT_ROOT
-                    / "tests/fixtures/small/browser_activity_events.synthetic.metadata.json",
+                "browser-activity": _evidence_group_config(
+                    "browser-activity",
+                    DATASET_OPTIONS["browser-activity"]["small-synthetic"],
                 ),
             }
         ),
@@ -167,6 +336,41 @@ def load_sample_case(case_key: str) -> SampleCase:
     except KeyError as exc:
         available = ", ".join(sorted(SAMPLE_CASES))
         raise ValueError(f"Unknown sample case {case_key!r}. Available cases: {available}") from exc
+
+
+def build_sample_case_for_evidence_selection(
+    evidence_type_key: str, dataset_key: str
+) -> SampleCase:
+    """Build a one-evidence-type GUI case from a selected event/claim pair."""
+
+    try:
+        dataset_option = DATASET_OPTIONS[evidence_type_key][dataset_key]
+    except KeyError as exc:
+        available_types = ", ".join(sorted(DATASET_OPTIONS))
+        available_datasets = ", ".join(
+            sorted(DATASET_OPTIONS.get(evidence_type_key, {}))
+        )
+        raise ValueError(
+            f"Unknown evidence selection type={evidence_type_key!r}, dataset={dataset_key!r}. "
+            f"Available types: {available_types}. "
+            f"Available datasets for this type: {available_datasets or 'none'}."
+        ) from exc
+
+    evidence_type = EVIDENCE_TYPE_CONFIGS[evidence_type_key]
+    return SampleCase(
+        key=f"{evidence_type_key}:{dataset_key}",
+        name=f"{evidence_type.label} — {dataset_option.name}",
+        description=dataset_option.description,
+        original_claim=(
+            f"Selected TraceBack claim set: {dataset_option.name} is validated "
+            f"against its paired {evidence_type.label.lower()} claims/assertions file."
+        ),
+        evidence_bundle=EvidenceBundle(
+            groups={
+                evidence_type_key: _evidence_group_config(evidence_type_key, dataset_option)
+            }
+        ),
+    )
 
 
 def validate_claim(claim: str, evidence_bundle: EvidenceBundle) -> ValidationReport:
@@ -207,8 +411,49 @@ def display_status_label(status: str | ValidationStatus) -> str:
 
     status_value = status.value if isinstance(status, ValidationStatus) else str(status)
     if status_value == ValidationStatus.INSUFFICIENT_EVIDENCE.value:
-        return "unsupported (insufficient_evidence)"
+        return "unsupported / insufficient evidence"
     return status_value
+
+
+def status_explainer_text() -> str:
+    """Return human-facing guidance for interpreting validation statuses."""
+
+    return (
+        "Supported: matching evidence agrees with the claim.\n\n"
+        "Contradicted: matching evidence was found, but it conflicts with the claim.\n\n"
+        "Unsupported / insufficient evidence: no matching evidence was found for the claim."
+    )
+
+
+def status_callout_text(result: ValidationResult) -> str:
+    """Return a short GUI callout explaining the result status."""
+
+    if result.status == ValidationStatus.SUPPORTED:
+        return "Matching evidence agrees with this claim."
+
+    if result.status == ValidationStatus.INSUFFICIENT_EVIDENCE:
+        return "No matching evidence was found for this claim, so TraceBack marks it as unsupported / insufficient evidence."
+
+    if _has_prefetch_absent_observation(result):
+        return (
+            "A matching record exists in the normalized Prefetch evidence, but it records "
+            "event_action=prefetch_absent instead of process_executed. Because matching "
+            "evidence exists and directly conflicts with the claim, TraceBack marks this "
+            "as contradicted rather than unsupported."
+        )
+
+    return (
+        "Matching evidence was found, but one or more fields conflict with the claim. "
+        "Because relevant evidence exists, TraceBack marks this as contradicted rather "
+        "than unsupported."
+    )
+
+
+def _has_prefetch_absent_observation(result: ValidationResult) -> bool:
+    return any(
+        observed.get("event_action") == "prefetch_absent"
+        for observed in result.observed_values
+    )
 
 
 def agent_review(claim: str, validation_report: ValidationReport) -> None:

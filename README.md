@@ -22,6 +22,32 @@ Current browser support is intentionally limited to Chromium-family normalized b
 
 Firefox is not currently supported in the CLI fixture generator or browser extractor path. Firefox support is future scope and should be added only after TraceBack has a matching `places.sqlite` parser/extractor path that normalizes Firefox history into the existing browser activity record shape.
 
+## Validation status meanings
+
+TraceBack uses three deterministic validation statuses:
+
+- `supported`: Matching evidence exists and agrees with the claim.
+- `contradicted`: Matching evidence exists, but one or more fields conflict with the claim.
+- `insufficient_evidence`: No matching evidence was found for the claim. In the GUI, this is shown as `unsupported / insufficient evidence` for plainer review wording.
+
+Important distinction: a claim is not `insufficient_evidence` just because the evidence says an expected event was absent. If TraceBack finds a matching normalized evidence record for the same key fields, and that record says the expected event did not occur, the claim is `contradicted`.
+
+Example:
+
+A claim says:
+
+```text
+addie_smith executed powershell.exe on WIN-FORENSIC-01 at 2026-05-20T14:18:42Z
+```
+
+The matching normalized Prefetch record says:
+
+```text
+event_action=prefetch_absent
+```
+
+TraceBack marks this as `contradicted` because matching evidence exists and conflicts with the claim. This is contradicted rather than unsupported.
+
 ## What TraceBack outputs
 
 For each claim, TraceBack returns one of three validation statuses:
@@ -64,7 +90,7 @@ UV_LINK_MODE=copy uv run --with pytest pytest -q
 Expected current result:
 
 ```text
-68 passed
+74 passed
 ```
 
 To run only the diverse synthetic fixture tests:
@@ -105,22 +131,44 @@ From the repo root:
 UV_LINK_MODE=copy uv run streamlit run streamlit_app.py
 ```
 
-Then open the local URL Streamlit prints, usually:
+Then open the local URL Streamlit prints. It usually looks like:
+
+```text
+Local URL: http://localhost:8501
+Network URL: http://<wsl-or-host-ip>:8501
+```
+
+Use the `Local URL` when you are opening the GUI from the same machine where Streamlit is running. In WSL, this usually works from the Windows browser too:
 
 ```text
 http://localhost:8501
 ```
 
+Use the `Network URL` when you need to open the GUI from another device or from a browser that cannot reach `localhost`. Replace `<wsl-or-host-ip>` with the IP address Streamlit prints, for example:
+
+```text
+http://172.18.59.78:8501
+```
+
+If the browser cannot connect, stop Streamlit with `Ctrl+C`, restart it, and use the fresh URL shown in the terminal.
+
 GUI v0 currently lets you:
 
-- select the small synthetic demo bundle
-- view the original claim
-- run deterministic validation
-- review evidence checks grouped by type:
+- select an evidence type:
   - Logon evidence
   - Process execution evidence
   - Browser activity evidence
-- view `supported`, `contradicted`, and plain-language `unsupported` labels
+- select a specific evidence file with its paired claims/assertions file
+- choose small synthetic, large noisy synthetic, and generated diverse fixture pairs where available
+- view the selected claim/assertion set
+- run deterministic validation
+- review evidence checks grouped by type
+- view `supported`, `contradicted`, and plain-language `unsupported / insufficient evidence` labels
+- see a status explainer that distinguishes contradicted from unsupported results
+- see colored result callouts:
+  - green for supported
+  - red for contradicted
+  - blue/info for unsupported / insufficient evidence
 - review compact evidence provenance when sidecar metadata is available
 - expand the full sidecar metadata JSON
 - view or download Markdown and JSON validation reports

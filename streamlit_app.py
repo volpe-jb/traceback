@@ -11,10 +11,14 @@ from typing import Any
 
 from traceback_app.claims.schema import ValidationResult
 from traceback_app.gui.adapters import (
-    SAMPLE_CASES,
+    DATASET_OPTIONS,
+    EVIDENCE_TYPE_LABELS,
     ValidationReport,
+    build_sample_case_for_evidence_selection,
+    dataset_option_display_label,
     display_status_label,
-    load_sample_case,
+    status_callout_text,
+    status_explainer_text,
     validate_claim,
 )
 
@@ -31,14 +35,24 @@ def main() -> None:
         "No LLM or API key is required."
     )
 
-    case_key = st.selectbox(
-        "Select sample case / evidence bundle",
-        options=list(SAMPLE_CASES),
-        format_func=lambda key: SAMPLE_CASES[key].name,
+    evidence_type_key = st.selectbox(
+        "Select evidence type",
+        options=list(DATASET_OPTIONS),
+        format_func=lambda key: EVIDENCE_TYPE_LABELS[key],
     )
-    sample = load_sample_case(case_key)
+    dataset_options = DATASET_OPTIONS[evidence_type_key]
+    dataset_key = st.selectbox(
+        "Select evidence file and paired claims/assertions file",
+        options=list(dataset_options),
+        format_func=lambda key: dataset_option_display_label(dataset_options[key]),
+    )
+    sample = build_sample_case_for_evidence_selection(evidence_type_key, dataset_key)
+    selection_key = f"{evidence_type_key}:{dataset_key}"
+    if st.session_state.get("traceback_selection_key") != selection_key:
+        st.session_state["traceback_selection_key"] = selection_key
+        st.session_state.pop("traceback_report", None)
 
-    st.subheader("Original claim")
+    st.subheader("Selected claim/assertion set")
     st.write(sample.original_claim)
     st.info(sample.description)
 
@@ -68,31 +82,34 @@ def main() -> None:
     _future_ai_placeholder(st)
 
 
-def _render_report_summary(st: object, report: ValidationReport) -> None:
+def _render_report_summary(st: Any, report: ValidationReport) -> None:
     st.subheader("Validation summary")
     supported, contradicted, unsupported = st.columns(3)
     supported.metric("supported", report.status_counts.get("supported", 0))
     contradicted.metric("contradicted", report.status_counts.get("contradicted", 0))
-    unsupported.metric("unsupported", report.status_counts.get("insufficient_evidence", 0))
+    unsupported.metric("unsupported / insufficient", report.status_counts.get("insufficient_evidence", 0))
+    st.info(status_explainer_text())
 
 
 def _render_grouped_results(st: object, report: ValidationReport) -> None:
     st.subheader("Evidence checks by type")
     for group_report in report.groups.values():
         with st.expander(group_report.label, expanded=True):
-            _render_provenance_summary(st, group_report.provenance_metadata)
+            _render_provenance_summary(
+                st, group_report.label, group_report.provenance_metadata
+            )
             for result in group_report.results:
                 _render_result(st, result)
 
 
 def _render_provenance_summary(
-    st: Any, provenance_metadata: Mapping[str, object] | None
+    st: Any, group_label: str, provenance_metadata: Mapping[str, object] | None
 ) -> None:
     if provenance_metadata is None:
         st.caption("No sidecar provenance metadata is attached for this evidence group yet.")
         return
 
-    st.markdown("**Evidence provenance**")
+    st.markdown(f"### Evidence provenance for {group_label}")
     source_hash = str(provenance_metadata.get("source_sha256", ""))
     normalized_hash = str(provenance_metadata.get("normalized_sha256", ""))
     st.write(f"Source artifact: `{provenance_metadata.get('source_artifact')}`")
@@ -118,6 +135,7 @@ def _short_hash(value: str) -> str:
 def _render_result(st: Any, result: ValidationResult) -> None:
     status_label = display_status_label(result.status)
     st.markdown(f"### {result.claim_id}: `{status_label}`")
+    _render_status_callout(st, result)
     st.write(result.claim_text)
     st.write(result.explanation)
 
@@ -135,10 +153,19 @@ def _render_result(st: Any, result: ValidationResult) -> None:
 
     if result.evidence_references:
         st.markdown("**Evidence references**")
-        st.dataframe(result.evidence_references, use_container_width=True)
+        st.dataframe(result.evidence_references, width="stretch")
 
 
-def _render_corrected_claim(st: object, report: ValidationReport) -> None:
+def _render_status_callout(st: Any, result: ValidationResult) -> None:
+    if result.status.value == "supported":
+        st.success(status_callout_text(result))
+    elif result.status.value == "contradicted":
+        st.error(status_callout_text(result))
+    else:
+        st.info(status_callout_text(result))
+
+
+def _render_corrected_claim(st: Any, report: ValidationReport) -> None:
     st.subheader("Corrected claim")
     if report.corrected_claim:
         st.success(report.corrected_claim)
