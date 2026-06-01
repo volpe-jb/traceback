@@ -501,8 +501,6 @@ def _combined_markdown_report(
     original_claim: str, group_reports: Mapping[str, EvidenceGroupReport]
 ) -> str:
     lines = [
-        "# TraceBack GUI v0 Validation Report",
-        "",
         "## Original claim",
         original_claim,
         "",
@@ -521,7 +519,7 @@ def _combined_json_report(
 
     return json.dumps(
         {
-            "report_type": "traceback_gui_v0_validation",
+            "report_type": "traceback_gui_v0_1_validation",
             "original_claim": original_claim,
             "groups": {
                 key: {

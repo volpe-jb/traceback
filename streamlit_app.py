@@ -7,7 +7,9 @@ Run with:
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import datetime
 from html import escape
+from pathlib import Path
 from typing import Any
 
 from traceback_app.claims.schema import ValidationResult
@@ -29,9 +31,9 @@ def main() -> None:
 
     import streamlit as st
 
-    st.set_page_config(page_title="TraceBack Review GUI v0", layout="wide")
+    st.set_page_config(page_title="TraceBack Review", layout="wide")
     _inject_print_styles(st)
-    st.title("TraceBack Review GUI v0")
+    st.title("TraceBack Review")
     st.caption(
         "Read-only review/demo layer over deterministic local validation. "
         "No LLM or API key is required."
@@ -53,6 +55,7 @@ def main() -> None:
     if st.session_state.get("traceback_selection_key") != selection_key:
         st.session_state["traceback_selection_key"] = selection_key
         st.session_state.pop("traceback_report", None)
+        st.session_state.pop("traceback_report_filename_stem", None)
 
     st.subheader("Selected claim/assertion set")
     st.write(sample.original_claim)
@@ -70,18 +73,38 @@ def main() -> None:
         st.session_state["traceback_report"] = validate_claim(
             sample.original_claim, sample.evidence_bundle
         )
+        st.session_state["traceback_report_filename_stem"] = _report_filename_stem(
+            _primary_events_path(sample.evidence_bundle.groups), datetime.now()
+        )
 
     report = st.session_state.get("traceback_report")
     if report is None:
         st.warning("Choose a sample case, then run validation.")
         return
 
+    filename_stem = st.session_state.get("traceback_report_filename_stem")
+    if not filename_stem:
+        filename_stem = _report_filename_stem(
+            _primary_events_path(sample.evidence_bundle.groups), datetime.now()
+        )
+        st.session_state["traceback_report_filename_stem"] = filename_stem
+
     _render_report_summary(st, report)
-    _render_report_actions(st, report)
+    _render_report_actions(st, report, filename_stem)
     _render_grouped_results(st, report)
     _render_corrected_claim(st, report)
     _render_end_marker(st)
     _render_report_preview(st, report)
+
+
+def _primary_events_path(groups: Mapping[str, Any]) -> Path:
+    return next(iter(groups.values())).events_path
+
+
+def _report_filename_stem(events_path: Path, timestamp: datetime) -> str:
+    dataset_name = events_path.stem
+    date_time = timestamp.strftime("%Y-%m-%d-%H%M%S")
+    return f"TraceBack-Gui-v0.1-{dataset_name}-Validation report-{date_time}"
 
 
 def _inject_print_styles(st: Any) -> None:
@@ -290,7 +313,10 @@ def _render_key_value_table(st: Any, values: Mapping[str, object]) -> None:
 def _display_value(value: object) -> str:
     if value is None:
         return "None"
-    return str(value)
+    text = str(value)
+    if len(text) >= 4 and text[1] == ":" and text[2:4] == r"\\":
+        return text.replace(r"\\", "\\")
+    return text
 
 
 def _render_observed_values(st: Any, result: ValidationResult) -> None:
@@ -348,7 +374,7 @@ def _render_status_callout(st: Any, result: ValidationResult) -> None:
         st.info(status_callout_text(result))
 
 
-def _render_report_actions(st: Any, report: ValidationReport) -> None:
+def _render_report_actions(st: Any, report: ValidationReport, filename_stem: str) -> None:
     st.subheader("Report exports")
     st.info(
         "Report exports are available here. "
@@ -360,32 +386,30 @@ def _render_report_actions(st: Any, report: ValidationReport) -> None:
         st.download_button(
             "Download Markdown report",
             data=report.markdown_report,
-            file_name="traceback-gui-v0-validation-report.md",
+            file_name=f"{filename_stem}.md",
             mime="text/markdown",
         )
     with json_column:
         st.download_button(
             "Download JSON report",
             data=report.json_report,
-            file_name="traceback-gui-v0-validation-report.json",
+            file_name=f"{filename_stem}.json",
             mime="application/json",
         )
     with print_column:
-        _render_print_button()
+        _render_print_button(st, filename_stem)
 
 
-def _render_print_button() -> None:
-    import streamlit as st
-
+def _render_print_button(st: Any, filename_stem: str) -> None:
     st.iframe(
-        """
+        f"""
         <style>
-            html, body {
+            html, body {{
                 margin: 0;
                 overflow: hidden;
-            }
+            }}
         </style>
-        <button onclick="window.parent.print()" style="
+        <button onclick="window.parent.document.title = '{filename_stem}'; window.parent.print()" style="
             background-color: #2563eb;
             border: 0;
             border-radius: 0.5rem;
@@ -420,13 +444,10 @@ def _render_end_marker(st: Any) -> None:
 def _render_report_preview(st: Any, report: ValidationReport) -> None:
     with st.expander("Validation report preview", expanded=False):
         st.caption(
-            "Optional quick review copy of the downloadable Markdown and JSON reports."
+            "Optional quick review copy of the downloadable Markdown report. "
+            "Use the JSON download button above for the machine-readable report."
         )
-        report_format = st.radio("Report preview", ["Markdown", "JSON"], horizontal=True)
-        if report_format == "Markdown":
-            st.code(report.markdown_report, language="markdown")
-        else:
-            st.code(report.json_report, language="json")
+        st.code(report.markdown_report, language="markdown")
 
 
 if __name__ == "__main__":

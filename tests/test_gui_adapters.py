@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+from datetime import datetime
 from pathlib import Path
 
 from traceback_app.claims.schema import ValidationStatus
@@ -33,6 +34,47 @@ class _SummaryCaptureStreamlit:
 
     def info(self, body: str) -> None:
         self.info_calls.append(body)
+
+
+class _NoOpColumn:
+    def __enter__(self) -> "_NoOpColumn":
+        return self
+
+    def __exit__(self, *_args: object) -> None:
+        return None
+
+
+class _ReportActionsCaptureStreamlit:
+    def __init__(self) -> None:
+        self.download_files: list[str] = []
+        self.iframe_body = ""
+
+    def subheader(self, _text: str) -> None:
+        pass
+
+    def info(self, _text: str) -> None:
+        pass
+
+    def columns(self, count: int) -> list[_NoOpColumn]:
+        return [_NoOpColumn() for _ in range(count)]
+
+    def download_button(self, _label: str, *, data: str, file_name: str, mime: str) -> None:
+        self.download_files.append(file_name)
+
+    def iframe(self, body: str, *, height: int, width: int) -> None:
+        self.iframe_body = body
+
+
+class _PrintButtonCaptureStreamlit:
+    def __init__(self) -> None:
+        self.iframe_body = ""
+        self.iframe_height = 0
+        self.iframe_width = 0
+
+    def iframe(self, body: str, *, height: int, width: int) -> None:
+        self.iframe_body = body
+        self.iframe_height = height
+        self.iframe_width = width
 
 
 def _load_streamlit_app_module():
@@ -102,7 +144,8 @@ def test_validate_claim_returns_grouped_validation_report_for_sample_bundle() ->
     assert report.status_counts[ValidationStatus.SUPPORTED.value] >= 1
     assert report.status_counts[ValidationStatus.CONTRADICTED.value] >= 1
     assert report.status_counts[ValidationStatus.INSUFFICIENT_EVIDENCE.value] >= 1
-    assert "TraceBack GUI v0 Validation Report" in report.markdown_report
+    assert "TraceBack GUI v0 Validation Report" not in report.markdown_report
+    assert report.markdown_report.startswith("## Original claim")
     assert report.corrected_claim is None
 
 
@@ -121,6 +164,8 @@ def test_validate_claim_carries_sidecar_provenance_into_gui_reports() -> None:
     assert "Normalized SHA-256" in report.markdown_report
     assert '"evidence_provenance"' in report.json_report
     assert '"source_sha256"' in report.json_report
+    assert '"report_type": "traceback_gui_v0_1_validation"' in report.json_report
+    assert "traceback_gui_v0_validation" not in report.json_report
 
 
 def test_display_status_label_uses_plain_unsupported_wording_for_insufficient_evidence() -> None:
@@ -159,13 +204,15 @@ def test_streamlit_result_display_avoids_repeating_contradiction_reason() -> Non
     assert "Why this contradicts the claim" not in streamlit_source
 
 
-def test_streamlit_printed_report_hides_placeholder_and_marks_end() -> None:
+def test_streamlit_printed_report_hides_placeholder_old_gui_title_and_marks_end() -> None:
     streamlit_source = (Path(__file__).resolve().parents[1] / "streamlit_app.py").read_text(
         encoding="utf-8"
     )
 
     assert "Future optional reviewer layer placeholder" not in streamlit_source
     assert "agent_review(claim, validation_report)" not in streamlit_source
+    assert "TraceBack Review GUI v0" not in streamlit_source
+    assert "TraceBack Review" in streamlit_source
     assert "End of validation report" in streamlit_source
     assert "_render_end_marker(st)" in streamlit_source
 
@@ -189,7 +236,7 @@ def test_streamlit_provenance_prints_full_hashes_and_top_report_actions() -> Non
     assert "Source SHA-256: `{source_hash}`" in streamlit_source
     assert "Normalized SHA-256: `{normalized_hash}`" in streamlit_source
     assert "_short_hash" not in streamlit_source
-    assert "_render_report_actions(st, report)" in streamlit_source
+    assert "_render_report_actions(st, report, filename_stem)" in streamlit_source
     assert "Print / Save as PDF" in streamlit_source
     assert "Print / Save screen as PDF" not in streamlit_source
     assert "Use this browser print helper" not in streamlit_source
@@ -206,6 +253,46 @@ def test_streamlit_report_export_buttons_use_fixed_sizes_without_iframe_scrollba
     assert "overflow: hidden" in streamlit_source
     assert "box-sizing: border-box" in streamlit_source
     assert "width: 100%;" in streamlit_source
+
+
+def test_streamlit_report_filename_uses_gui_version_dataset_name_and_timestamp() -> None:
+    streamlit_app = _load_streamlit_app_module()
+
+    filename = streamlit_app._report_filename_stem(
+        Path("tests/fixtures/small/windows_logon_events.synthetic.json"),
+        datetime(2026, 6, 1, 14, 35, 9),
+    )
+
+    assert filename == (
+        "TraceBack-Gui-v0.1-windows_logon_events.synthetic-"
+        "Validation report-2026-06-01-143509"
+    )
+
+
+def test_streamlit_markdown_and_json_downloads_use_selected_dataset_filename() -> None:
+    streamlit_app = _load_streamlit_app_module()
+    sample = build_sample_case_for_evidence_selection("logon", "small-synthetic")
+    report = validate_claim(sample.original_claim, sample.evidence_bundle)
+    fake_st = _ReportActionsCaptureStreamlit()
+    filename_stem = "TraceBack-Gui-v0.1-windows_logon_events.synthetic-Validation report-2026-06-01-143509"
+
+    streamlit_app._render_report_actions(fake_st, report, filename_stem)
+
+    assert fake_st.download_files == [
+        f"{filename_stem}.md",
+        f"{filename_stem}.json",
+    ]
+
+
+def test_streamlit_print_button_sets_pdf_default_title_before_printing() -> None:
+    streamlit_app = _load_streamlit_app_module()
+    fake_st = _PrintButtonCaptureStreamlit()
+    filename_stem = "TraceBack-Gui-v0.1-windows_logon_events.synthetic-Validation report-2026-06-01-143509"
+
+    streamlit_app._render_print_button(fake_st, filename_stem)
+
+    assert f"window.parent.document.title = '{filename_stem}'" in fake_st.iframe_body
+    assert "window.parent.print()" in fake_st.iframe_body
 
 
 def test_streamlit_print_helper_uses_current_iframe_api() -> None:
@@ -244,6 +331,19 @@ def test_streamlit_key_value_tables_are_compact_and_print_friendly() -> None:
     assert "st.table(rows)" not in streamlit_source
 
 
+def test_streamlit_prefetch_path_display_uses_single_windows_separators() -> None:
+    streamlit_app = _load_streamlit_app_module()
+
+    assert (
+        streamlit_app._display_value(r"C:\\Windows\\System32\\notepad.exe")
+        == r"C:\Windows\System32\notepad.exe"
+    )
+    assert (
+        streamlit_app._display_value(r"C:\\Windows\\Prefetch\\NOTEPAD.EXE-12345678.pf")
+        == r"C:\Windows\Prefetch\NOTEPAD.EXE-12345678.pf"
+    )
+
+
 def test_streamlit_report_preview_is_hidden_behind_collapsed_expander() -> None:
     streamlit_source = (Path(__file__).resolve().parents[1] / "streamlit_app.py").read_text(
         encoding="utf-8"
@@ -251,6 +351,15 @@ def test_streamlit_report_preview_is_hidden_behind_collapsed_expander() -> None:
 
     assert "with st.expander(\"Validation report preview\", expanded=False):" in streamlit_source
     assert "st.subheader(\"Validation report preview\")" not in streamlit_source
+
+
+def test_streamlit_report_preview_does_not_print_raw_json_paths() -> None:
+    streamlit_source = (Path(__file__).resolve().parents[1] / "streamlit_app.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "st.code(report.json_report, language=\"json\")" not in streamlit_source
+    assert "Optional quick review copy of the downloadable Markdown report." in streamlit_source
 
 
 def test_streamlit_emphasizes_observed_values_only_for_contradicted_results() -> None:
