@@ -42,7 +42,7 @@ HOSTS = [
     "WIN-HARBOR-08",
 ]
 TIMEZONES = ["Z", "-05:00", "+01:00", "+09:00", "-07:00", "+10:00"]
-BROWSERS = ["Microsoft Edge", "Google Chrome", "Mozilla Firefox", "Chromium"]
+BROWSERS = ["Microsoft Edge", "Google Chrome", "Chromium"]
 URLS = [
     "https://example.net/inventory",
     "https://training.example.org/lab-notes",

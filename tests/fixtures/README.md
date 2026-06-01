@@ -83,3 +83,49 @@ source artifact -> extractor/parser -> normalized JSON -> validation results
 Normalized JSON is the working validation format, not a replacement for primary forensic evidence. Raw/source artifacts and parser-native outputs should be preserved locally where practical so a reviewer can trace validation records back to the source evidence.
 
 Current browser support is intentionally narrow: Chromium/Edge History SQLite databases with `urls` and `visits` tables. Firefox, Safari, and other browser formats should be handled later by browser-specific extractors that emit the same normalized browser activity record shape.
+
+## Diverse synthetic validation fixtures
+
+`diverse/` contains deterministic generated fixture pairs for all three current validators:
+
+```text
+windows_logon
+windows_prefetch_process_execution
+browser_activity
+```
+
+Each diverse fixture filename encodes the expected validation counts:
+
+```text
+<claim_type>_<events|claims>.<size>.<scenario>-<records>-<supported>-<contradicted>-<insufficient>.json
+```
+
+For example:
+
+```text
+browser_activity_events.small.mixed-4-1-2-1.json
+```
+
+means the app should examine 4 browser activity claims and produce 1 supported, 2 contradicted, and 1 insufficient-evidence result.
+
+Regenerate these fixtures from the repo root with:
+
+```bash
+python3 scripts/generate_diverse_synthetic_fixtures.py
+```
+
+Then verify them with:
+
+```bash
+UV_LINK_MODE=copy uv run --with pytest pytest tests/test_diverse_synthetic_fixtures.py -q
+```
+
+The diverse browser activity fixtures currently use only supported Chromium-family normalized browser labels:
+
+```text
+Microsoft Edge
+Google Chrome
+Chromium
+```
+
+Do not add Firefox or another browser to `BROWSERS = [...]` in `scripts/generate_diverse_synthetic_fixtures.py` until TraceBack has a matching extractor/parser path for that browser data type. Firefox support is future scope, likely through a `places.sqlite` extractor that normalizes `moz_places` and `moz_historyvisits` data into the existing browser activity record shape.
