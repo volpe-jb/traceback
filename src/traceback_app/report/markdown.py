@@ -2,15 +2,23 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from traceback_app.claims.schema import ValidationResult, ValidationStatus
 
 
 def results_to_markdown(
-    results: list[ValidationResult], *, title: str = "TraceBack Windows Logon Validation Summary"
+    results: list[ValidationResult],
+    *,
+    title: str = "TraceBack Windows Logon Validation Summary",
+    provenance_metadata: Mapping[str, object] | None = None,
 ) -> str:
     """Return a compact Markdown-style validation summary."""
 
     lines = [f"# {title}", ""]
+    if provenance_metadata is not None:
+        lines.extend(_format_provenance_metadata(provenance_metadata))
+        lines.append("")
     for result in results:
         lines.extend(
             [
@@ -30,9 +38,38 @@ def results_to_markdown(
             if result.evidence_references:
                 lines.append("- Evidence references:")
                 for reference in result.evidence_references:
-                    lines.append("  - " + _format_inline_evidence_reference(reference, separator="="))
+                    lines.append(
+                        "  - " + _format_inline_evidence_reference(reference, separator="=")
+                    )
         lines.append("")
     return "\n".join(lines)
+
+
+def _format_provenance_metadata(metadata: Mapping[str, object]) -> list[str]:
+    parser_tool = metadata.get("parser_tool")
+    parser_tool_version = metadata.get("parser_tool_version")
+    parser_line = f"- Parser/extractor: {parser_tool}"
+    if parser_tool_version:
+        parser_line += f" (version {parser_tool_version})"
+
+    lines = [
+        "## Evidence provenance",
+        f"- Source artifact: {metadata.get('source_artifact')}",
+        f"- Source SHA-256: {metadata.get('source_sha256')}",
+        f"- Normalized records: {metadata.get('normalized_file')}",
+        f"- Normalized SHA-256: {metadata.get('normalized_sha256')}",
+        parser_line,
+        f"- Records validated: {metadata.get('record_count')}",
+    ]
+
+    parser_output = metadata.get("parser_output")
+    if parser_output:
+        lines.append(f"- Parser-native output: {parser_output}")
+        lines.append(
+            f"- Parser-native output SHA-256: {metadata.get('parser_output_sha256')}"
+        )
+
+    return lines
 
 
 def _contradicted_result_lines(result: ValidationResult) -> list[str]:

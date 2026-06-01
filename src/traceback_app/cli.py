@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from traceback_app.claims.schema import ValidationResult
 from traceback_app.evidence.loaders import (
+    BROWSER_ACTIVITY_CLAIM_SCHEMA,
+    BROWSER_ACTIVITY_EVENT_SCHEMA,
     LOGON_CLAIM_SCHEMA,
     LOGON_EVENT_SCHEMA,
     PREFETCH_PROCESS_CLAIM_SCHEMA,
@@ -19,6 +23,7 @@ from traceback_app.evidence.loaders import (
 )
 from traceback_app.report.json_report import results_to_json
 from traceback_app.report.markdown import results_to_markdown
+from traceback_app.validators.browser_activity import validate_browser_activity_claims
 from traceback_app.validators.logon import validate_logon_claims
 from traceback_app.validators.prefetch_process import validate_prefetch_process_claims
 
@@ -41,6 +46,13 @@ VALIDATORS: dict[str, ValidatorConfig] = {
         PREFETCH_PROCESS_EVENT_SCHEMA,
         PREFETCH_PROCESS_CLAIM_SCHEMA,
     ),
+    "browser-activity": (
+        validate_browser_activity_claims,
+        "TraceBack Browser Activity Validation Summary",
+        "traceback_browser_activity_validation",
+        BROWSER_ACTIVITY_EVENT_SCHEMA,
+        BROWSER_ACTIVITY_CLAIM_SCHEMA,
+    ),
 }
 
 
@@ -59,6 +71,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--events", required=True, help="Path to normalized events JSON.")
     parser.add_argument("--claims", required=True, help="Path to claims JSON.")
     parser.add_argument(
+        "--metadata",
+        help="Optional path to sidecar provenance metadata JSON for the normalized events file.",
+    )
+    parser.add_argument(
         "--json-output",
         help="Optional path to save a machine-readable JSON validation report.",
     )
@@ -76,10 +92,15 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    validator, markdown_title, report_type, event_schema, claim_schema = VALIDATORS[args.validator]
+    validator, markdown_title, report_type, event_schema, claim_schema = VALIDATORS[
+        args.validator
+    ]
     try:
         events = load_json_records(args.events, schema=event_schema)
         claims = load_json_records(args.claims, schema=claim_schema)
+        provenance_metadata = (
+            _load_provenance_metadata(args.metadata) if args.metadata else None
+        )
     except SourceDataError as exc:
         print("Could not load source data.", file=sys.stderr)
         print(str(exc), file=sys.stderr)
@@ -87,17 +108,73 @@ def main(argv: list[str] | None = None) -> int:
 
     results = validator(claims, events)
 
-    print(results_to_markdown(results, title=markdown_title))
+    print(
+        results_to_markdown(
+            results,
+            title=markdown_title,
+            provenance_metadata=provenance_metadata,
+        )
+    )
 
     if args.json_output:
         output_path = Path(args.json_output)
-        output_path.write_text(results_to_json(results, report_type=report_type) + "\n", encoding="utf-8")
+        output_path.write_text(
+            results_to_json(
+                results,
+                report_type=report_type,
+                provenance_metadata=provenance_metadata,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
         print(f"JSON report written to: {output_path}")
 
     if args.print_json:
-        print(results_to_json(results, report_type=report_type))
+        print(
+            results_to_json(
+                results,
+                report_type=report_type,
+                provenance_metadata=provenance_metadata,
+            )
+        )
 
     return 0
+
+
+def _load_provenance_metadata(path: str | Path) -> dict[str, Any]:
+    metadata_path = Path(path)
+    try:
+        data = json.loads(metadata_path.read_text(encoding="utf-8-sig"))
+    except FileNotFoundError as exc:
+        raise SourceDataError(
+            metadata_path,
+            "Could not load provenance metadata",
+            "The sidecar metadata JSON file was not found.",
+            "Check the metadata path or regenerate the normalized records with sidecar metadata.",
+        ) from exc
+    except IsADirectoryError as exc:
+        raise SourceDataError(
+            metadata_path,
+            "Could not load provenance metadata",
+            "Expected a sidecar metadata JSON file, but the supplied path is a directory.",
+            "Choose the specific .metadata.json file for the normalized evidence records.",
+        ) from exc
+    except json.JSONDecodeError as exc:
+        raise SourceDataError(
+            metadata_path,
+            "Could not load provenance metadata",
+            f"Could not parse JSON at line {exc.lineno}, column {exc.colno}.",
+            "Verify the sidecar metadata file or regenerate it from the source artifact.",
+        ) from exc
+
+    if not isinstance(data, dict):
+        raise SourceDataError(
+            metadata_path,
+            "Could not load provenance metadata",
+            "Expected a JSON object containing sidecar metadata fields.",
+            "Use the .metadata.json file generated alongside the normalized evidence records.",
+        )
+    return data
 
 
 if __name__ == "__main__":
