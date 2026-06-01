@@ -1,0 +1,13 @@
+{
+  "traceback_metadata_version": "1.0",
+  "source_artifact": "tests/fixtures/small/browser_activity.synthetic.sqlite",
+  "source_sha256": "b35c2bfb4e54fa29f4c4c7e616372e93557ed230305a0f11cb1debde90d56f9f",
+  "normalized_file": "tests/fixtures/small/browser_activity_events.synthetic.json",
+  "normalized_sha256": "be984b0aeee0370b4748130b6c46450ec5c4cb3ae30a79717da960834062d272",
+  "artifact_type": "browser_history",
+  "parser_tool": "traceback_chromium_history_sqlite_extractor",
+  "parser_tool_version": "0.1.0",
+  "parser_output": null,
+  "parser_output_sha256": null,
+  "record_count": 4
+}

@@ -12,3 +12,6 @@ They are not validator evidence; they are defensive QA inputs for source-data in
 - `encoding-problems/`: Windows-adjacent encoding cases, including UTF-8 BOM files that should be accepted and non-UTF-8 files that should fail clearly.
 - `wrong-file-content/`: HTML or plain-text error output accidentally saved with a `.json` extension.
 - `schema-errors/`: valid JSON with malformed TraceBack records, such as missing fields, wrong types, invalid timestamps, duplicate IDs, empty arrays, mixed schemas, partially malformed larger files, and validator/file mismatches.
+- `database-errors/`: invalid or structurally incompatible browser History SQLite inputs, including empty files, plain text saved as `.sqlite`, corrupt headers, missing required tables, and missing required columns.
+
+Database-error fixtures test source artifact ingestion. They are intentionally separate from malformed JSON fixtures because they fail before normalized TraceBack records exist.

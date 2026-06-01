@@ -99,6 +99,51 @@ PREFETCH_PROCESS_CLAIM_SCHEMA = RecordSchema(
     empty_detail="The claims file contains no records to validate.",
 )
 
+BROWSER_ACTIVITY_EVENT_SCHEMA = RecordSchema(
+    name="Browser activity source evidence",
+    required_fields={
+        "event_uid": str,
+        "event_type": str,
+        "artifact_type": str,
+        "source_artifact": str,
+        "parser_tool": str,
+        "host": str,
+        "timestamp_utc": str,
+        "event_action": str,
+        "account": str,
+        "activity_type": str,
+        "browser": str,
+        "url": str,
+    },
+    unique_field="event_uid",
+    expected_type_field="event_type",
+    expected_type_value="browser_activity",
+    empty_detail="The source evidence file contains no browser activity records for validation.",
+    optional_type_fields={
+        "title": str,
+        "download_name": str,
+    },
+)
+
+BROWSER_ACTIVITY_CLAIM_SCHEMA = RecordSchema(
+    name="Browser activity claims",
+    required_fields={
+        "claim_id": str,
+        "claim_type": str,
+        "claim_text": str,
+        "account": str,
+        "host": str,
+        "timestamp_utc": str,
+        "expected_event_action": str,
+        "expected_activity_type": str,
+        "expected_url": str,
+    },
+    unique_field="claim_id",
+    expected_type_field="claim_type",
+    expected_type_value="browser_activity",
+    empty_detail="The claims file contains no browser activity records to validate.",
+)
+
 
 @dataclass(frozen=True)
 class SourceDataError(ValueError):

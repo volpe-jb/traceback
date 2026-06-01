@@ -1,0 +1,46 @@
+[
+  {
+    "claim_id": "claim-browser-001",
+    "claim_type": "browser_activity",
+    "claim_text": "addie_smith visited the security checklist page in Microsoft Edge at 2026-05-20T14:15:30Z on WIN-FORENSIC-01.",
+    "account": "addie_smith",
+    "host": "WIN-FORENSIC-01",
+    "timestamp_utc": "2026-05-20T14:15:30Z",
+    "expected_event_action": "browser_activity_observed",
+    "expected_activity_type": "visit",
+    "expected_url": "https://example.org/security-checklist"
+  },
+  {
+    "claim_id": "claim-browser-002",
+    "claim_type": "browser_activity",
+    "claim_text": "addie_smith visited https://example.org/suspicious-download in Microsoft Edge at 2026-05-20T14:21:00Z on WIN-FORENSIC-01.",
+    "account": "addie_smith",
+    "host": "WIN-FORENSIC-01",
+    "timestamp_utc": "2026-05-20T14:21:00Z",
+    "expected_event_action": "browser_activity_observed",
+    "expected_activity_type": "visit",
+    "expected_url": "https://example.org/suspicious-download"
+  },
+  {
+    "claim_id": "claim-browser-003",
+    "claim_type": "browser_activity",
+    "claim_text": "addie_smith downloaded a file from https://example.org/downloads/tool.zip in Microsoft Edge at 2026-05-20T14:26:45Z on WIN-FORENSIC-01.",
+    "account": "addie_smith",
+    "host": "WIN-FORENSIC-01",
+    "timestamp_utc": "2026-05-20T14:26:45Z",
+    "expected_event_action": "browser_activity_observed",
+    "expected_activity_type": "download",
+    "expected_url": "https://example.org/downloads/tool.zip"
+  },
+  {
+    "claim_id": "claim-browser-004",
+    "claim_type": "browser_activity",
+    "claim_text": "addie_smith visited https://example.org/no-evidence at 2026-05-20T16:30:00Z on WIN-FORENSIC-01.",
+    "account": "addie_smith",
+    "host": "WIN-FORENSIC-01",
+    "timestamp_utc": "2026-05-20T16:30:00Z",
+    "expected_event_action": "browser_activity_observed",
+    "expected_activity_type": "visit",
+    "expected_url": "https://example.org/no-evidence"
+  }
+]
