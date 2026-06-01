@@ -16,6 +16,7 @@ dist/
 
 # Generated local reports
 validation_report*.json
+reports/
 
 # OS/editor noise
 .DS_Store

@@ -31,6 +31,16 @@ ValidatorFn = Callable[[list[dict[str, object]], list[dict[str, object]]], list[
 
 ValidatorConfig = tuple[ValidatorFn, str, str, RecordSchema, RecordSchema]
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+BROWSER_ACTIVITY_DEMO = {
+    "validator": "browser-activity",
+    "database_artifact": PROJECT_ROOT / "tests/fixtures/small/browser_activity.synthetic.sqlite",
+    "events": PROJECT_ROOT / "tests/fixtures/small/browser_activity_events.synthetic.json",
+    "claims": PROJECT_ROOT / "tests/fixtures/small/browser_activity_claims.synthetic.json",
+    "metadata": PROJECT_ROOT / "tests/fixtures/small/browser_activity_events.synthetic.metadata.json",
+}
+DEMOS = {"browser-activity": BROWSER_ACTIVITY_DEMO}
+
 VALIDATORS: dict[str, ValidatorConfig] = {
     "logon": (
         validate_logon_claims,
@@ -68,8 +78,16 @@ def build_parser() -> argparse.ArgumentParser:
         default="logon",
         help="Validation experiment to run. Defaults to logon.",
     )
-    parser.add_argument("--events", required=True, help="Path to normalized events JSON.")
-    parser.add_argument("--claims", required=True, help="Path to claims JSON.")
+    parser.add_argument(
+        "--demo",
+        choices=sorted(DEMOS),
+        help=(
+            "Run a built-in demo with database-derived JSON evidence and "
+            "assertion/assumption claims."
+        ),
+    )
+    parser.add_argument("--events", help="Path to normalized events JSON.")
+    parser.add_argument("--claims", help="Path to claims/assertions JSON.")
     parser.add_argument(
         "--metadata",
         help="Optional path to sidecar provenance metadata JSON for the normalized events file.",
@@ -91,6 +109,10 @@ def main(argv: list[str] | None = None) -> int:
 
     parser = build_parser()
     args = parser.parse_args(argv)
+    _apply_demo_defaults(args)
+
+    if not args.events or not args.claims:
+        parser.error("--events and --claims are required unless --demo is supplied")
 
     validator, markdown_title, report_type, event_schema, claim_schema = VALIDATORS[
         args.validator
@@ -108,6 +130,9 @@ def main(argv: list[str] | None = None) -> int:
 
     results = validator(claims, events)
 
+    if args.demo:
+        _print_demo_inputs(args.demo, args)
+
     print(
         results_to_markdown(
             results,
@@ -118,6 +143,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.json_output:
         output_path = Path(args.json_output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(
             results_to_json(
                 results,
@@ -139,6 +165,28 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     return 0
+
+
+def _apply_demo_defaults(args: argparse.Namespace) -> None:
+    if not args.demo:
+        return
+
+    demo = DEMOS[args.demo]
+    args.validator = demo["validator"]
+    args.events = args.events or demo["events"]
+    args.claims = args.claims or demo["claims"]
+    args.metadata = args.metadata or demo["metadata"]
+
+
+def _print_demo_inputs(demo_name: str, args: argparse.Namespace) -> None:
+    demo = DEMOS[demo_name]
+    print("TraceBack browser activity demo")
+    print("This demo evaluates database-derived JSON evidence against an assertion/assumption file.")
+    print(f"- Database artifact: {demo['database_artifact']}")
+    print(f"- Normalized JSON evidence: {args.events}")
+    print(f"- Assertion/assumption file: {args.claims}")
+    print(f"- Evidence provenance metadata: {args.metadata}")
+    print("")
 
 
 def _load_provenance_metadata(path: str | Path) -> dict[str, Any]:
