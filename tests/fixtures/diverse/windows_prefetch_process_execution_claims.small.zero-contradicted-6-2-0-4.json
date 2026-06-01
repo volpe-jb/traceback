@@ -1,0 +1,68 @@
+[
+  {
+    "claim_id": "claim-diverse-prefetch-small-0201",
+    "claim_type": "windows_prefetch_process_execution",
+    "claim_text": "mateo_silva_201 executed 7zFM.exe on WIN-BIRCH-02 at 2026-05-18T09:27:51+09:00.",
+    "account": "mateo_silva_201",
+    "host": "WIN-BIRCH-02",
+    "timestamp_utc": "2026-05-18T09:27:51+09:00",
+    "expected_event_action": "process_executed",
+    "expected_process_name": "7zFM.exe",
+    "source_timezone": "+09:00"
+  },
+  {
+    "claim_id": "claim-diverse-prefetch-small-0202",
+    "claim_type": "windows_prefetch_process_execution",
+    "claim_text": "ivana_petrova_202 executed calc.exe on WIN-CEDAR-03 at 2026-05-19T10:34:02-07:00.",
+    "account": "ivana_petrova_202",
+    "host": "WIN-CEDAR-03",
+    "timestamp_utc": "2026-05-19T10:34:02-07:00",
+    "expected_event_action": "process_executed",
+    "expected_process_name": "calc.exe",
+    "source_timezone": "-07:00"
+  },
+  {
+    "claim_id": "claim-diverse-prefetch-small-0203",
+    "claim_type": "windows_prefetch_process_execution",
+    "claim_text": "jamal_ellis_203 executed notepad.exe on WIN-DELTA-04 at 2026-05-20T11:41:13+10:00.",
+    "account": "jamal_ellis_203",
+    "host": "WIN-DELTA-04",
+    "timestamp_utc": "2026-05-20T11:41:13+10:00",
+    "expected_event_action": "process_executed",
+    "expected_process_name": "notepad.exe",
+    "source_timezone": "+10:00"
+  },
+  {
+    "claim_id": "claim-diverse-prefetch-small-0204",
+    "claim_type": "windows_prefetch_process_execution",
+    "claim_text": "kiara_bennett_204 executed powershell.exe on WIN-EMBER-05 at 2026-05-21T12:48:24Z.",
+    "account": "kiara_bennett_204",
+    "host": "WIN-EMBER-05",
+    "timestamp_utc": "2026-05-21T12:48:24Z",
+    "expected_event_action": "process_executed",
+    "expected_process_name": "powershell.exe",
+    "source_timezone": "Z"
+  },
+  {
+    "claim_id": "claim-diverse-prefetch-small-0205",
+    "claim_type": "windows_prefetch_process_execution",
+    "claim_text": "renata_cruz_205 executed winword.exe on WIN-FJORD-06 at 2026-05-22T13:55:35-05:00.",
+    "account": "renata_cruz_205",
+    "host": "WIN-FJORD-06",
+    "timestamp_utc": "2026-05-22T13:55:35-05:00",
+    "expected_event_action": "process_executed",
+    "expected_process_name": "winword.exe",
+    "source_timezone": "-05:00"
+  },
+  {
+    "claim_id": "claim-diverse-prefetch-small-0206",
+    "claim_type": "windows_prefetch_process_execution",
+    "claim_text": "oscar_lind_206 executed teams.exe on WIN-GROVE-07 at 2026-05-23T14:02:46+01:00.",
+    "account": "oscar_lind_206",
+    "host": "WIN-GROVE-07",
+    "timestamp_utc": "2026-05-23T14:02:46+01:00",
+    "expected_event_action": "process_executed",
+    "expected_process_name": "teams.exe",
+    "source_timezone": "+01:00"
+  }
+]

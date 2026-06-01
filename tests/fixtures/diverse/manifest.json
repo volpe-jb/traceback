@@ -1,0 +1,76 @@
+{
+  "scenarios": [
+    {
+      "scenario_id": "windows_logon.small.zero-supported-5-0-3-2",
+      "claim_type": "windows_logon",
+      "size": "small",
+      "records_examined": 5,
+      "supported": 0,
+      "contradicted": 3,
+      "insufficient_evidence": 2,
+      "events_file": "windows_logon_events.small.zero-supported-5-0-3-2.json",
+      "claims_file": "windows_logon_claims.small.zero-supported-5-0-3-2.json",
+      "purpose": "Diversify synthetic identities, timestamps, hosts, and result-count patterns for AI-assisted evaluation tests."
+    },
+    {
+      "scenario_id": "windows_logon.large.zero-insufficient-24-9-15-0",
+      "claim_type": "windows_logon",
+      "size": "large",
+      "records_examined": 24,
+      "supported": 9,
+      "contradicted": 15,
+      "insufficient_evidence": 0,
+      "events_file": "windows_logon_events.large.zero-insufficient-24-9-15-0.json",
+      "claims_file": "windows_logon_claims.large.zero-insufficient-24-9-15-0.json",
+      "purpose": "Diversify synthetic identities, timestamps, hosts, and result-count patterns for AI-assisted evaluation tests."
+    },
+    {
+      "scenario_id": "windows_prefetch_process_execution.small.zero-contradicted-6-2-0-4",
+      "claim_type": "windows_prefetch_process_execution",
+      "size": "small",
+      "records_examined": 6,
+      "supported": 2,
+      "contradicted": 0,
+      "insufficient_evidence": 4,
+      "events_file": "windows_prefetch_process_execution_events.small.zero-contradicted-6-2-0-4.json",
+      "claims_file": "windows_prefetch_process_execution_claims.small.zero-contradicted-6-2-0-4.json",
+      "purpose": "Diversify synthetic identities, timestamps, hosts, and result-count patterns for AI-assisted evaluation tests."
+    },
+    {
+      "scenario_id": "windows_prefetch_process_execution.large.zero-supported-30-0-12-18",
+      "claim_type": "windows_prefetch_process_execution",
+      "size": "large",
+      "records_examined": 30,
+      "supported": 0,
+      "contradicted": 12,
+      "insufficient_evidence": 18,
+      "events_file": "windows_prefetch_process_execution_events.large.zero-supported-30-0-12-18.json",
+      "claims_file": "windows_prefetch_process_execution_claims.large.zero-supported-30-0-12-18.json",
+      "purpose": "Diversify synthetic identities, timestamps, hosts, and result-count patterns for AI-assisted evaluation tests."
+    },
+    {
+      "scenario_id": "browser_activity.small.mixed-4-1-2-1",
+      "claim_type": "browser_activity",
+      "size": "small",
+      "records_examined": 4,
+      "supported": 1,
+      "contradicted": 2,
+      "insufficient_evidence": 1,
+      "events_file": "browser_activity_events.small.mixed-4-1-2-1.json",
+      "claims_file": "browser_activity_claims.small.mixed-4-1-2-1.json",
+      "purpose": "Diversify synthetic identities, timestamps, hosts, and result-count patterns for AI-assisted evaluation tests."
+    },
+    {
+      "scenario_id": "browser_activity.large.zero-insufficient-40-16-24-0",
+      "claim_type": "browser_activity",
+      "size": "large",
+      "records_examined": 40,
+      "supported": 16,
+      "contradicted": 24,
+      "insufficient_evidence": 0,
+      "events_file": "browser_activity_events.large.zero-insufficient-40-16-24-0.json",
+      "claims_file": "browser_activity_claims.large.zero-insufficient-40-16-24-0.json",
+      "purpose": "Diversify synthetic identities, timestamps, hosts, and result-count patterns for AI-assisted evaluation tests."
+    }
+  ]
+}

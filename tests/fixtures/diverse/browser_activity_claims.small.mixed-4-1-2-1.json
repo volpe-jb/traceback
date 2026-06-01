@@ -1,0 +1,50 @@
+[
+  {
+    "claim_id": "claim-diverse-browser-small-0401",
+    "claim_type": "browser_activity",
+    "claim_text": "devon_reed_401 performed browser activity at https://docs.example.org/security-baseline on WIN-BIRCH-02 at 2026-05-11T17:47:31+10:00.",
+    "account": "devon_reed_401",
+    "host": "WIN-BIRCH-02",
+    "timestamp_utc": "2026-05-11T17:47:31+10:00",
+    "expected_event_action": "browser_activity_observed",
+    "expected_activity_type": "visit",
+    "expected_url": "https://docs.example.org/security-baseline",
+    "source_timezone": "+10:00"
+  },
+  {
+    "claim_id": "claim-diverse-browser-small-0402",
+    "claim_type": "browser_activity",
+    "claim_text": "sana_okafor_402 performed browser activity at https://example.net/inventory on WIN-CEDAR-03 at 2026-05-12T18:54:42Z.",
+    "account": "sana_okafor_402",
+    "host": "WIN-CEDAR-03",
+    "timestamp_utc": "2026-05-12T18:54:42Z",
+    "expected_event_action": "browser_activity_observed",
+    "expected_activity_type": "download",
+    "expected_url": "https://example.net/inventory",
+    "source_timezone": "Z"
+  },
+  {
+    "claim_id": "claim-diverse-browser-small-0403",
+    "claim_type": "browser_activity",
+    "claim_text": "eli_morales_403 performed browser activity at https://training.example.org/lab-notes on WIN-DELTA-04 at 2026-05-13T19:01:53-05:00.",
+    "account": "eli_morales_403",
+    "host": "WIN-DELTA-04",
+    "timestamp_utc": "2026-05-13T19:01:53-05:00",
+    "expected_event_action": "browser_activity_observed",
+    "expected_activity_type": "visit",
+    "expected_url": "https://training.example.org/lab-notes",
+    "source_timezone": "-05:00"
+  },
+  {
+    "claim_id": "claim-diverse-browser-small-0404",
+    "claim_type": "browser_activity",
+    "claim_text": "tessa_nguyen_404 performed browser activity at https://portal.example.com/helpdesk on WIN-EMBER-05 at 2026-05-14T20:08:04+01:00.",
+    "account": "tessa_nguyen_404",
+    "host": "WIN-EMBER-05",
+    "timestamp_utc": "2026-05-14T20:08:04+01:00",
+    "expected_event_action": "browser_activity_observed",
+    "expected_activity_type": "visit",
+    "expected_url": "https://portal.example.com/helpdesk",
+    "source_timezone": "+01:00"
+  }
+]
