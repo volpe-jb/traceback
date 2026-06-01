@@ -43,7 +43,11 @@ def test_markdown_report_includes_compact_evidence_provenance_when_metadata_is_s
         f"(version {metadata['parser_tool_version']})"
         in markdown
     )
-    assert f"- Records validated: {metadata['record_count']}" in markdown
+    assert f"- Records examined: {metadata['record_count']}" in markdown
+    assert "- Supported: 1" in markdown
+    assert "- Contradicted: 2" in markdown
+    assert "- Insufficient evidence: 1" in markdown
+    assert "- Records validated:" not in markdown
 
 
 def test_json_report_includes_evidence_provenance_when_metadata_is_supplied():

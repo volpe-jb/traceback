@@ -17,7 +17,7 @@ def results_to_markdown(
 
     lines = [f"# {title}", ""]
     if provenance_metadata is not None:
-        lines.extend(_format_provenance_metadata(provenance_metadata))
+        lines.extend(_format_provenance_metadata(provenance_metadata, results))
         lines.append("")
     for result in results:
         lines.extend(
@@ -45,13 +45,16 @@ def results_to_markdown(
     return "\n".join(lines)
 
 
-def _format_provenance_metadata(metadata: Mapping[str, object]) -> list[str]:
+def _format_provenance_metadata(
+    metadata: Mapping[str, object], results: list[ValidationResult]
+) -> list[str]:
     parser_tool = metadata.get("parser_tool")
     parser_tool_version = metadata.get("parser_tool_version")
     parser_line = f"- Parser/extractor: {parser_tool}"
     if parser_tool_version:
         parser_line += f" (version {parser_tool_version})"
 
+    status_counts = _count_result_statuses(results)
     lines = [
         "## Evidence provenance",
         f"- Source artifact: {metadata.get('source_artifact')}",
@@ -59,7 +62,10 @@ def _format_provenance_metadata(metadata: Mapping[str, object]) -> list[str]:
         f"- Normalized records: {metadata.get('normalized_file')}",
         f"- Normalized SHA-256: {metadata.get('normalized_sha256')}",
         parser_line,
-        f"- Records validated: {metadata.get('record_count')}",
+        f"- Records examined: {metadata.get('record_count')}",
+        f"- Supported: {status_counts[ValidationStatus.SUPPORTED]}",
+        f"- Contradicted: {status_counts[ValidationStatus.CONTRADICTED]}",
+        f"- Insufficient evidence: {status_counts[ValidationStatus.INSUFFICIENT_EVIDENCE]}",
     ]
 
     parser_output = metadata.get("parser_output")
@@ -70,6 +76,10 @@ def _format_provenance_metadata(metadata: Mapping[str, object]) -> list[str]:
         )
 
     return lines
+
+
+def _count_result_statuses(results: list[ValidationResult]) -> dict[ValidationStatus, int]:
+    return {status: sum(result.status == status for result in results) for status in ValidationStatus}
 
 
 def _contradicted_result_lines(result: ValidationResult) -> list[str]:
