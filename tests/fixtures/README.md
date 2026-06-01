@@ -13,11 +13,7 @@ large/
 
 `large/` contains deterministic noisy synthetic fixtures with the same four base claims and required evidence anchors, plus background noise. These are used to prove the validators can find the correct evidence reference inside a larger evidence set.
 
-The Find Evil Lab Obsidian vault remains the documented demo/data source:
-
-```text
-/mnt/c/Users/Brandi Volpe/Markdown vaults/Find Evil Lab/Data created
-```
+The Find Evil Lab Obsidian vault remains the documented demo/data source outside this app repo.
 
 The app repo keeps copies here so a clone of the code repo can run:
 
