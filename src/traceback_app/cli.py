@@ -101,6 +101,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Also print the machine-readable JSON validation report.",
     )
+    parser.add_argument(
+        "--preview",
+        action="store_true",
+        help="Print the human-readable Markdown validation report preview.",
+    )
     return parser
 
 
@@ -133,13 +138,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.demo:
         _print_demo_inputs(args.demo, args)
 
-    print(
-        results_to_markdown(
-            results,
-            title=markdown_title,
-            provenance_metadata=provenance_metadata,
-        )
+    should_print_markdown_preview = args.preview or (
+        not args.json_output and not args.print_json
     )
+    if should_print_markdown_preview:
+        print(
+            results_to_markdown(
+                results,
+                title=markdown_title,
+                provenance_metadata=provenance_metadata,
+            )
+        )
 
     if args.json_output:
         output_path = Path(args.json_output)

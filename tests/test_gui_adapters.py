@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import importlib.util
+from pathlib import Path
+
 from traceback_app.claims.schema import ValidationStatus
 from traceback_app.gui.adapters import (
     DATASET_OPTIONS,
@@ -15,6 +18,64 @@ from traceback_app.gui.adapters import (
     status_callout_text,
     validate_claim,
 )
+
+
+class _SummaryCaptureStreamlit:
+    def __init__(self) -> None:
+        self.markdown_calls: list[tuple[str, bool]] = []
+        self.info_calls: list[str] = []
+
+    def subheader(self, _text: str) -> None:
+        pass
+
+    def markdown(self, body: str, unsafe_allow_html: bool = False) -> None:
+        self.markdown_calls.append((body, unsafe_allow_html))
+
+    def info(self, body: str) -> None:
+        self.info_calls.append(body)
+
+
+def _load_streamlit_app_module():
+    streamlit_path = Path(__file__).resolve().parents[1] / "streamlit_app.py"
+    spec = importlib.util.spec_from_file_location("traceback_streamlit_app", streamlit_path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _assert_summary_card_is_visually_distinct_for(evidence_type: str) -> None:
+    streamlit_app = _load_streamlit_app_module()
+    _render_report_summary = streamlit_app._render_report_summary
+
+    sample = build_sample_case_for_evidence_selection(evidence_type, "small-synthetic")
+    report = validate_claim(sample.original_claim, sample.evidence_bundle)
+    fake_st = _SummaryCaptureStreamlit()
+
+    _render_report_summary(fake_st, report)
+
+    summary_html = fake_st.markdown_calls[0][0]
+    assert fake_st.markdown_calls[0][1] is True
+    assert "traceback-validation-summary-card" in summary_html
+    assert "traceback-validation-summary-title" in summary_html
+    assert "traceback-validation-summary-counts" in summary_html
+    assert "Supported" in summary_html
+    assert "Contradicted" in summary_html
+    assert "Unsupported / insufficient evidence" in summary_html
+    assert fake_st.info_calls == [status_explainer_text()]
+
+
+def test_logon_validation_summary_uses_neutral_card_separate_from_blue_explainer() -> None:
+    _assert_summary_card_is_visually_distinct_for("logon")
+
+
+def test_prefetch_validation_summary_uses_neutral_card_separate_from_blue_explainer() -> None:
+    _assert_summary_card_is_visually_distinct_for("prefetch-process")
+
+
+def test_browser_validation_summary_uses_neutral_card_separate_from_blue_explainer() -> None:
+    _assert_summary_card_is_visually_distinct_for("browser-activity")
 
 
 def test_load_sample_case_exposes_original_claim_and_all_evidence_groups() -> None:
@@ -88,6 +149,121 @@ def test_status_callout_text_explains_prefetch_absent_is_contradicted_not_unsupp
     assert "matching record" in callout
     assert "prefetch_absent" in callout
     assert "contradicted rather than unsupported" in callout
+
+
+def test_streamlit_result_display_avoids_repeating_contradiction_reason() -> None:
+    streamlit_source = (Path(__file__).resolve().parents[1] / "streamlit_app.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Why this contradicts the claim" not in streamlit_source
+
+
+def test_streamlit_printed_report_hides_placeholder_and_marks_end() -> None:
+    streamlit_source = (Path(__file__).resolve().parents[1] / "streamlit_app.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Future optional reviewer layer placeholder" not in streamlit_source
+    assert "agent_review(claim, validation_report)" not in streamlit_source
+    assert "End of validation report" in streamlit_source
+    assert "_render_end_marker(st)" in streamlit_source
+
+
+def test_streamlit_print_css_allows_tables_to_split_without_large_blank_gaps() -> None:
+    streamlit_source = (Path(__file__).resolve().parents[1] / "streamlit_app.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "@media print" in streamlit_source
+    assert "break-inside: auto" in streamlit_source
+    assert "page-break-inside: auto" in streamlit_source
+    assert "break-inside: avoid" in streamlit_source
+
+
+def test_streamlit_provenance_prints_full_hashes_and_top_report_actions() -> None:
+    streamlit_source = (Path(__file__).resolve().parents[1] / "streamlit_app.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Source SHA-256: `{source_hash}`" in streamlit_source
+    assert "Normalized SHA-256: `{normalized_hash}`" in streamlit_source
+    assert "_short_hash" not in streamlit_source
+    assert "_render_report_actions(st, report)" in streamlit_source
+    assert "Print / Save as PDF" in streamlit_source
+    assert "Print / Save screen as PDF" not in streamlit_source
+    assert "Use this browser print helper" not in streamlit_source
+    assert "The Markdown report includes full source and normalized SHA-256 hashes" in streamlit_source
+    assert "The JSON report includes full provenance metadata" in streamlit_source
+
+
+def test_streamlit_report_export_buttons_use_fixed_sizes_without_iframe_scrollbar() -> None:
+    streamlit_source = (Path(__file__).resolve().parents[1] / "streamlit_app.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "width=190" in streamlit_source
+    assert "overflow: hidden" in streamlit_source
+    assert "box-sizing: border-box" in streamlit_source
+    assert "width: 100%;" in streamlit_source
+
+
+def test_streamlit_print_helper_uses_current_iframe_api() -> None:
+    streamlit_source = (Path(__file__).resolve().parents[1] / "streamlit_app.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "st.iframe(" in streamlit_source
+    assert "streamlit.components.v1" not in streamlit_source
+    assert "components.html(" not in streamlit_source
+
+
+def test_streamlit_result_details_use_two_column_tables() -> None:
+    streamlit_source = (Path(__file__).resolve().parents[1] / "streamlit_app.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "_render_key_value_table(st, result.expected_values)" in streamlit_source
+    assert "Matching criteria searched" in streamlit_source
+    assert "No normalized evidence record was found for the matching criteria below." in streamlit_source
+    assert "_result_expected_values_heading(result)" in streamlit_source
+    assert "_render_result_summary(st, result)" in streamlit_source
+    assert "st.warning(_result_summary(result), icon=\"⚠️\")" in streamlit_source
+    assert "st.json(result.expected_values" not in streamlit_source
+    assert "st.dataframe(result.evidence_references" not in streamlit_source
+
+
+def test_streamlit_key_value_tables_are_compact_and_print_friendly() -> None:
+    streamlit_source = (Path(__file__).resolve().parents[1] / "streamlit_app.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "traceback-kv-table" in streamlit_source
+    assert "border-collapse: collapse" in streamlit_source
+    assert "break-inside: auto" in streamlit_source
+    assert "st.table(rows)" not in streamlit_source
+
+
+def test_streamlit_report_preview_is_hidden_behind_collapsed_expander() -> None:
+    streamlit_source = (Path(__file__).resolve().parents[1] / "streamlit_app.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "with st.expander(\"Validation report preview\", expanded=False):" in streamlit_source
+    assert "st.subheader(\"Validation report preview\")" not in streamlit_source
+
+
+def test_streamlit_emphasizes_observed_values_only_for_contradicted_results() -> None:
+    streamlit_source = (Path(__file__).resolve().parents[1] / "streamlit_app.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "_render_observed_values(st, result)" in streamlit_source
+    assert "Observed values from evidence" in streamlit_source
+    assert "traceback-observed-values" in streamlit_source
+    assert "result.status.value == \"contradicted\"" in streamlit_source
+    assert "color: #0f766e" in streamlit_source
+    assert streamlit_source.index(".traceback-observed-values") < streamlit_source.index("@media print")
 
 
 def test_sample_case_registry_includes_streamlit_default_case() -> None:

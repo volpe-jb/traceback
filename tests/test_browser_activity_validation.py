@@ -34,17 +34,27 @@ def _assert_expected_browser_outcomes(results):
     assert wrong_url.status == ValidationStatus.CONTRADICTED
     assert wrong_url.evidence_references[0]["url"] == "https://example.org/benign-search"
     assert wrong_url.expected_values["url"] == "https://example.org/suspicious-download"
+    assert wrong_url.explanation.startswith(
+        "Contradicted by normalized browser activity evidence for the same account, host, and timestamp."
+    )
+    assert "Claim checked:" not in wrong_url.explanation
     assert "suspicious-download" in wrong_url.explanation
     assert "benign-search" in wrong_url.explanation
 
     assert wrong_action.status == ValidationStatus.CONTRADICTED
     assert wrong_action.evidence_references[0]["activity_type"] == "visit"
     assert wrong_action.expected_values["activity_type"] == "download"
+    assert "Why this contradicts the claim:" not in wrong_action.explanation
     assert "download" in wrong_action.contradiction_reason
     assert "visit" in wrong_action.contradiction_reason
 
     assert missing.status == ValidationStatus.INSUFFICIENT_EVIDENCE
     assert missing.evidence_references == []
+    assert missing.expected_values == {
+        "account": "addie_smith",
+        "host": "WIN-FORENSIC-01",
+        "timestamp_utc": "2026-05-20T16:30:00Z",
+    }
 
 
 def test_small_browser_activity_claims_return_expected_outcomes():

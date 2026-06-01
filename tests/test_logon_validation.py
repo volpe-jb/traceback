@@ -91,15 +91,17 @@ def test_markdown_report_for_contradictions_shows_claim_expected_evidence_and_re
 
     assert "Claim checked:" in markdown
     assert "What the claim expected:" in markdown
-    assert "expected_event_action: logon_success" in markdown
-    assert "expected_logon_type: 2" in markdown
-    assert "expected_logon_type_label: Interactive" in markdown
-    assert "What the evidence shows:" in markdown
-    assert "event_uid: synthetic-logon-0005" in markdown
-    assert "event_id: 4625" in markdown
-    assert "event_action: logon_failure" in markdown
-    assert "logon_type: 2" in markdown
-    assert "logon_type_label: Interactive" in markdown
+    assert "| Field | Value |" in markdown
+    assert "| expected_event_action | logon_success |" in markdown
+    assert "| expected_logon_type | 2 |" in markdown
+    assert "| expected_logon_type_label | Interactive |" in markdown
+    assert "What the evidence actually shows:" in markdown
+    assert "What the evidence shows:" not in markdown
+    assert "| event_uid | synthetic-logon-0005 |" in markdown
+    assert "| event_id | 4625 |" in markdown
+    assert "| event_action | logon_failure |" in markdown
+    assert "| logon_type | 2 |" in markdown
+    assert "| logon_type_label | Interactive |" in markdown
     assert "Why this contradicts the claim:" in markdown
     assert (
         "The claim says the logon succeeded, but the matching Windows Security "

@@ -58,6 +58,7 @@ def validate_browser_activity_claim(claim: dict[str, Any], events: list[dict[str
                 f"timestamp_utc={claim.get('timestamp_utc')}."
             ),
             evidence_references=[],
+            expected_values=_build_matching_criteria(claim),
         )
 
     supported_event = next((event for event in candidates if _matches_expected_claim(claim, event)), None)
@@ -93,13 +94,11 @@ def validate_browser_activity_claim(claim: dict[str, Any], events: list[dict[str
         claim_text=claim_text,
         status=ValidationStatus.CONTRADICTED,
         explanation=(
-            f"Claim checked: {claim_text} "
             "Contradicted by normalized browser activity evidence for the same account, host, and timestamp. "
             f"What the claim expected: event_action={expected_values.get('event_action')}, "
             f"activity_type={expected_values.get('activity_type')}, url={expected_values.get('url')}. "
             "What the evidence shows: "
             + "; ".join(conflicts)
-            + f" Why this contradicts the claim: {contradiction_reason}"
         ),
         evidence_references=references,
         expected_values=expected_values,
@@ -126,6 +125,14 @@ def _matches_expected_claim(claim: dict[str, Any], event: dict[str, Any]) -> boo
 
 def _build_evidence_reference(event: dict[str, Any]) -> dict[str, Any]:
     return {field: event.get(field) for field in BROWSER_ACTIVITY_REFERENCE_FIELDS}
+
+
+def _build_matching_criteria(claim: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "account": claim.get("account"),
+        "host": claim.get("host"),
+        "timestamp_utc": claim.get("timestamp_utc"),
+    }
 
 
 def _build_expected_values(claim: dict[str, Any]) -> dict[str, Any]:

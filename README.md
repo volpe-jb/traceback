@@ -6,6 +6,8 @@ The goal is simple: if an AI assistant says something happened, TraceBack checks
 
 The current app keeps deterministic validation at the center. The CLI is the reproducible workflow door, and the optional Streamlit GUI is a thin review/demo door over the same local validation path. Agent/LLM workflows can be added around it later, but the validation core should remain independently testable and runnable without API keys.
 
+The current validation path runs locally and does not require API keys.
+
 ## Current MVP scope
 
 TraceBack currently validates claims across three evidence types:
@@ -56,7 +58,7 @@ For each claim, TraceBack returns one of three validation statuses:
 - `contradicted` — matching evidence exists, but it conflicts with the claim
 - `insufficient_evidence` — no matching evidence was found for the claim
 
-The CLI prints a Markdown report by default and can also print a JSON report with `--print-json`. The Streamlit GUI can view or download the same kind of validation report for the bundled demo case.
+The CLI prints a Markdown report when no output option is supplied, can save JSON with `--json-output`, can print JSON with `--print-json`, and can show the human-readable Markdown preview explicitly with `--preview`. The Streamlit GUI can view or download the same kind of validation report for the bundled demo case.
 
 ## Repository layout
 
@@ -90,7 +92,7 @@ UV_LINK_MODE=copy uv run --with pytest pytest -q
 Expected current result:
 
 ```text
-74 passed
+87 passed
 ```
 
 To run only the diverse synthetic fixture tests:
@@ -152,6 +154,16 @@ http://172.18.59.78:8501
 
 If the browser cannot connect, stop Streamlit with `Ctrl+C`, restart it, and use the fresh URL shown in the terminal.
 
+## Demo workflow for judges
+
+1. Start the Streamlit review GUI.
+2. Select one of the bundled demo dataset pairs.
+3. Run deterministic validation.
+4. Review the validation summary and result callouts for supported, contradicted, and unsupported / insufficient evidence claims.
+5. Review the expected-vs-observed evidence details for contradicted claims.
+6. Download the Markdown or JSON report, or use Print / Save as PDF for a browser-generated PDF copy.
+7. Return to the top of the UI and pick another dataset to evaluate.
+
 GUI v0 currently lets you:
 
 - select an evidence type:
@@ -171,9 +183,24 @@ GUI v0 currently lets you:
   - blue/info for unsupported / insufficient evidence
 - review compact evidence provenance when sidecar metadata is available
 - expand the full sidecar metadata JSON
-- view or download Markdown and JSON validation reports
+- view compact, print-friendly evidence references
+- view the full validation report preview only when needed
+- download Markdown and JSON validation reports
+- use fixed-size report controls for Markdown, JSON, and browser Print / Save as PDF
 
 The GUI does not call an LLM, does not require an API key, and does not implement the future AI reviewer loop.
+
+The Streamlit GUI is intentionally concise for demo and judging use. It emphasizes status callouts, expected-vs-observed evidence details, compact provenance, and exportable reports rather than exposing every internal validation detail by default.
+
+## Report outputs
+
+TraceBack can produce:
+
+- Markdown validation reports
+- JSON validation reports
+- browser-generated PDF output from the Streamlit print view
+
+The PDF path uses the browser print dialog rather than a separate PDF-generation dependency.
 
 ## Diverse synthetic fixtures
 

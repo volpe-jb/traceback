@@ -85,13 +85,15 @@ def test_markdown_report_for_prefetch_process_contradiction_shows_expected_evide
     assert "TraceBack Prefetch Process Validation Summary" in markdown
     assert "Claim checked:" in markdown
     assert "What the claim expected:" in markdown
-    assert "expected_event_action: process_executed" in markdown
-    assert "expected_process_name: powershell.exe" in markdown
-    assert "What the evidence shows:" in markdown
-    assert "event_uid: synthetic-prefetch-process-0002" in markdown
-    assert "event_action: process_executed" in markdown
-    assert "process_name: calc.exe" in markdown
-    assert "source_artifact: C:\\Windows\\Prefetch\\CALC.EXE-87654321.pf" in markdown
+    assert "| Field | Value |" in markdown
+    assert "| expected_event_action | process_executed |" in markdown
+    assert "| expected_process_name | powershell.exe |" in markdown
+    assert "What the evidence actually shows:" in markdown
+    assert "What the evidence shows:" not in markdown
+    assert "| event_uid | synthetic-prefetch-process-0002 |" in markdown
+    assert "| event_action | process_executed |" in markdown
+    assert "| process_name | calc.exe |" in markdown
+    assert "| source_artifact | C:\\Windows\\Prefetch\\CALC.EXE-87654321.pf |" in markdown
     assert "Why this contradicts the claim:" in markdown
     assert "The claim says powershell.exe executed, but the matching Prefetch-style evidence shows calc.exe." in markdown
 

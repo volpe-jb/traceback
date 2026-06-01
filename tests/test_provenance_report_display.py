@@ -48,6 +48,27 @@ def test_markdown_report_includes_compact_evidence_provenance_when_metadata_is_s
     assert "- Contradicted: 2" in markdown
     assert "- Insufficient evidence: 1" in markdown
     assert "- Records validated:" not in markdown
+    assert markdown.rstrip().endswith("---\n\n**End of validation report**")
+
+
+def test_cli_markdown_output_marks_end_of_report(capsys):
+    exit_code = cli.main(
+        [
+            "--validator",
+            "browser-activity",
+            "--events",
+            str(EVENTS_PATH),
+            "--claims",
+            str(CLAIMS_PATH),
+            "--metadata",
+            str(METADATA_PATH),
+        ]
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert captured.out.rstrip().endswith("---\n\n**End of validation report**")
 
 
 def test_json_report_includes_evidence_provenance_when_metadata_is_supplied():

@@ -31,17 +31,18 @@ def results_to_markdown(
         else:
             lines.extend(
                 [
-                    f"- Claim: {result.claim_text}",
-                    f"- Explanation: {result.explanation}",
+                    "- Claim:",
+                    f"  - {result.claim_text}",
+                    "- Explanation:",
+                    f"  - {_human_summary(result)}",
                 ]
             )
             if result.evidence_references:
                 lines.append("- Evidence references:")
                 for reference in result.evidence_references:
-                    lines.append(
-                        "  - " + _format_inline_evidence_reference(reference, separator="=")
-                    )
+                    lines.extend(_format_key_value_table(reference))
         lines.append("")
+    lines.extend(["---", "", "**End of validation report**", ""])
     return "\n".join(lines)
 
 
@@ -89,34 +90,54 @@ def _contradicted_result_lines(result: ValidationResult) -> list[str]:
         "- What the claim expected:",
     ]
 
-    for key, value in result.expected_values.items():
-        lines.append(f"  - expected_{key}: {value}")
+    lines.extend(
+        _format_key_value_table(
+            {f"expected_{key}": value for key, value in result.expected_values.items()}
+        )
+    )
 
-    lines.append("- What the evidence shows:")
+    lines.append("- What the evidence actually shows:")
     for reference in result.evidence_references:
-        lines.extend(_format_block_evidence_reference(reference))
+        lines.extend(_format_key_value_table(reference))
 
     lines.extend(
         [
             "- Why this contradicts the claim:",
             f"  - {result.contradiction_reason}",
             "- Explanation:",
-            f"  - {result.explanation}",
+            f"  - {_human_summary(result)}",
         ]
     )
     return lines
 
 
-def _format_block_evidence_reference(reference: dict[str, object]) -> list[str]:
-    lines: list[str] = []
-    for index, (key, value) in enumerate(reference.items()):
-        prefix = "  -" if index == 0 else "   "
-        lines.append(f"{prefix} {key}: {value}")
+def _format_key_value_table(values: Mapping[str, object]) -> list[str]:
+    lines = ["", "  | Field | Value |", "  | --- | --- |"]
+    for key, value in values.items():
+        lines.append(f"  | {_escape_table_cell(str(key))} | {_escape_table_cell(_format_value(value))} |")
+    lines.append("")
     return lines
 
 
-def _format_inline_evidence_reference(reference: dict[str, object], *, separator: str) -> str:
-    parts = []
-    for key, value in reference.items():
-        parts.append(f"{key}{separator}{value}")
-    return ", ".join(parts)
+def _format_value(value: object) -> str:
+    if value is None:
+        return "None"
+    return str(value)
+
+
+def _escape_table_cell(value: str) -> str:
+    return value.replace("|", "\\|").replace("\n", " ")
+
+
+def _human_summary(result: ValidationResult) -> str:
+    if result.status == ValidationStatus.SUPPORTED:
+        return _before_first_marker(result.explanation, ": ")
+    if result.status == ValidationStatus.CONTRADICTED:
+        return _before_first_marker(result.explanation, " What the claim expected:")
+    return result.explanation
+
+
+def _before_first_marker(value: str, marker: str) -> str:
+    if marker not in value:
+        return value
+    return value.split(marker, 1)[0].rstrip(" .") + "."
