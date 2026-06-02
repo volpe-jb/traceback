@@ -459,7 +459,7 @@ def _has_prefetch_absent_observation(result: ValidationResult) -> bool:
 def agent_review(claim: str, validation_report: ValidationReport) -> None:
     """Placeholder for a future optional AI reviewer layer.
 
-    GUI v0 intentionally does not implement prompt design, API/secret handling,
+    GUI v0.1 intentionally does not implement prompt design, API/secret handling,
     hallucination controls, or agentic correction behavior.
     """
 

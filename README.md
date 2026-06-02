@@ -8,6 +8,8 @@ The current app keeps deterministic validation at the center. The CLI is the rep
 
 The current validation path runs locally and does not require API keys.
 
+New to GitHub? Start here: [Newcomers: download and try TraceBack](#newcomers-download-and-try-traceback)
+
 ## Current MVP scope
 
 TraceBack currently validates claims across three evidence types:
@@ -73,6 +75,41 @@ tests/fixtures/             Small, large, malformed, and diverse fixtures
 scripts/                    Deterministic fixture-generation scripts
 streamlit_app.py            Streamlit review/demo GUI entry point
 ```
+
+## Bundled fixtures and custom data
+
+TraceBack v0.1 ships with bundled fixture data under:
+
+```text
+tests/fixtures/
+```
+
+Useful fixture folders include:
+
+```text
+tests/fixtures/small/
+tests/fixtures/large/
+tests/fixtures/diverse/
+tests/fixtures/malformed/
+```
+
+- `small/` contains compact synthetic examples that are easier to read.
+- `large/` contains noisy synthetic examples that test whether TraceBack can find the right evidence inside larger data.
+- `diverse/` contains generated examples with different mixes of supported, contradicted, and insufficient-evidence results.
+- `malformed/` contains intentionally broken examples used to test error handling and user-facing error messages.
+
+The Streamlit GUI currently uses bundled fixture pairs only. It does not currently provide a file picker for arbitrary custom evidence and claims files.
+
+The CLI can run custom files with:
+
+```bash
+PYTHONPATH=src python3 -m traceback_app.cli \
+  --validator <validator-name> \
+  --events path/to/your_events.json \
+  --claims path/to/your_claims.json
+```
+
+Custom files must already be normalized JSON records matching the selected validator schema. TraceBack does not currently accept most raw forensic artifacts directly through the GUI.
 
 ## Requirements
 
@@ -164,7 +201,7 @@ If the browser cannot connect, stop Streamlit with `Ctrl+C`, restart it, and use
 6. Download the Markdown or JSON report, or use Print / Save as PDF for a browser-generated PDF copy.
 7. Return to the top of the UI and pick another dataset to evaluate.
 
-GUI v0 currently lets you:
+GUI v0.1 currently lets you:
 
 - select an evidence type:
   - Logon evidence
@@ -297,6 +334,453 @@ Report behavior:
 - Markdown reports include an `Evidence provenance` section when sidecar metadata is supplied.
 - JSON reports include an `evidence_provenance` object when sidecar metadata is supplied.
 - The Streamlit GUI shows compact provenance for evidence groups that have sidecar metadata and provides an expandable full metadata JSON view.
+
+## Newcomers: download and try TraceBack
+
+This section is for people who are new to GitHub, command-line tools, or Python projects.
+
+TraceBack can be tested without a GitHub account and without API keys. You can download the code as a ZIP file, unzip it, open a command line in the project folder, and run the built-in demo data.
+
+### 1. Download the code from GitHub
+
+1. Open the TraceBack GitHub repository page in your browser.
+2. Click the green `Code` button.
+3. Click `Download ZIP`.
+4. Save the ZIP file somewhere easy to find, such as your Downloads folder.
+
+You do not need to use `git clone` for this first test.
+
+### 2. Unzip the project
+
+After the ZIP file downloads:
+
+1. Find the downloaded ZIP file.
+2. Right-click it.
+3. Choose `Extract All...` or your system's unzip option.
+4. Open the extracted folder.
+
+The extracted folder may have a name like:
+
+```text
+traceback-main
+```
+
+or:
+
+```text
+TraceBack-main
+```
+
+The exact folder name may vary depending on how GitHub packaged the download.
+
+### 3. Open a command line in the project folder
+
+Run the commands from inside the main TraceBack project folder.
+
+That folder should contain files and folders such as:
+
+```text
+README.md
+pyproject.toml
+streamlit_app.py
+src/
+tests/
+```
+
+#### On Windows
+
+One beginner-friendly way:
+
+1. Open the extracted TraceBack folder in File Explorer.
+2. Click the address bar at the top of File Explorer.
+3. Type:
+
+```text
+cmd
+```
+
+4. Press Enter.
+
+This opens Command Prompt already inside that folder.
+
+Another option is PowerShell:
+
+1. Open the extracted TraceBack folder.
+2. Hold Shift and right-click inside the folder.
+3. Choose `Open PowerShell window here` or `Open in Terminal`.
+
+#### On macOS, Linux, or WSL
+
+Open Terminal, then use `cd` to move into the extracted folder.
+
+Example:
+
+```bash
+cd Downloads/TraceBack-main
+```
+
+If your folder has a different name, use that name instead.
+
+### 4. Make sure Python and uv are available
+
+TraceBack expects:
+
+- Python 3.10 or newer
+- `uv`, a Python project runner/package tool
+
+Check Python:
+
+```bash
+python --version
+```
+
+or:
+
+```bash
+python3 --version
+```
+
+Check uv:
+
+```bash
+uv --version
+```
+
+If `uv` is not installed, install it from the official instructions:
+
+```text
+https://docs.astral.sh/uv/getting-started/installation/
+```
+
+### 5. What does "normalized JSON" mean?
+
+TraceBack does not currently read most raw forensic artifacts directly in the CLI examples.
+
+Instead, TraceBack expects evidence to be in normalized JSON format.
+
+In plain language, normalized JSON means:
+
+- the data is saved as a `.json` file
+- the records use the field names TraceBack expects
+- the records have already been converted from a raw source, such as a browser history database, Windows logon artifact, or parser output
+- the data is shaped so the selected validator knows what to compare
+
+For example, a raw browser history database might start as a SQLite file like:
+
+```text
+browser_activity.synthetic.sqlite
+```
+
+A parser/extractor converts that into normalized JSON records like:
+
+```text
+browser_activity_events.synthetic.json
+```
+
+TraceBack then compares those normalized evidence records against a claims/assertions file like:
+
+```text
+browser_activity_claims.synthetic.json
+```
+
+So the flow is:
+
+```text
+raw forensic artifact or parser output
+        -> normalized JSON evidence records
+        -> TraceBack validation
+        -> supported / contradicted / insufficient_evidence result
+```
+
+The Streamlit UI currently uses bundled normalized JSON fixture pairs only.
+
+The CLI can test your own files, but those files must already be normalized JSON records that match one of TraceBack's supported validator types.
+
+### 6. Try the basic CLI validation
+
+The CLI means "command-line interface." It lets you run TraceBack from the terminal.
+
+Use this command from the project folder on macOS, Linux, or WSL:
+
+```bash
+PYTHONPATH=src python3 -m traceback_app.cli \
+  --validator logon \
+  --events tests/fixtures/small/windows_logon_events.synthetic.json \
+  --claims tests/fixtures/small/windows_logon_claims.synthetic.json
+```
+
+On Windows Command Prompt, use this one-line version instead:
+
+```bat
+set PYTHONPATH=src && python -m traceback_app.cli --validator logon --events tests/fixtures/small/windows_logon_events.synthetic.json --claims tests/fixtures/small/windows_logon_claims.synthetic.json
+```
+
+On Windows PowerShell, use this one-line version instead:
+
+```powershell
+$env:PYTHONPATH="src"; python -m traceback_app.cli --validator logon --events tests/fixtures/small/windows_logon_events.synthetic.json --claims tests/fixtures/small/windows_logon_claims.synthetic.json
+```
+
+You should see a human-readable validation report.
+
+### 7. Try the different evidence types
+
+TraceBack v0.1 currently supports three validator types:
+
+```text
+logon
+prefetch-process
+browser-activity
+```
+
+#### Windows logon activity
+
+macOS, Linux, or WSL:
+
+```bash
+PYTHONPATH=src python3 -m traceback_app.cli \
+  --validator logon \
+  --events tests/fixtures/small/windows_logon_events.synthetic.json \
+  --claims tests/fixtures/small/windows_logon_claims.synthetic.json
+```
+
+Windows Command Prompt:
+
+```bat
+set PYTHONPATH=src && python -m traceback_app.cli --validator logon --events tests/fixtures/small/windows_logon_events.synthetic.json --claims tests/fixtures/small/windows_logon_claims.synthetic.json
+```
+
+Windows PowerShell:
+
+```powershell
+$env:PYTHONPATH="src"; python -m traceback_app.cli --validator logon --events tests/fixtures/small/windows_logon_events.synthetic.json --claims tests/fixtures/small/windows_logon_claims.synthetic.json
+```
+
+#### Windows Prefetch process execution
+
+macOS, Linux, or WSL:
+
+```bash
+PYTHONPATH=src python3 -m traceback_app.cli \
+  --validator prefetch-process \
+  --events tests/fixtures/small/windows_prefetch_process_events.synthetic.json \
+  --claims tests/fixtures/small/windows_prefetch_process_claims.synthetic.json
+```
+
+Windows Command Prompt:
+
+```bat
+set PYTHONPATH=src && python -m traceback_app.cli --validator prefetch-process --events tests/fixtures/small/windows_prefetch_process_events.synthetic.json --claims tests/fixtures/small/windows_prefetch_process_claims.synthetic.json
+```
+
+Windows PowerShell:
+
+```powershell
+$env:PYTHONPATH="src"; python -m traceback_app.cli --validator prefetch-process --events tests/fixtures/small/windows_prefetch_process_events.synthetic.json --claims tests/fixtures/small/windows_prefetch_process_claims.synthetic.json
+```
+
+#### Browser activity
+
+macOS, Linux, or WSL:
+
+```bash
+PYTHONPATH=src python3 -m traceback_app.cli \
+  --validator browser-activity \
+  --events tests/fixtures/small/browser_activity_events.synthetic.json \
+  --claims tests/fixtures/small/browser_activity_claims.synthetic.json \
+  --metadata tests/fixtures/small/browser_activity_events.synthetic.metadata.json
+```
+
+Windows Command Prompt:
+
+```bat
+set PYTHONPATH=src && python -m traceback_app.cli --validator browser-activity --events tests/fixtures/small/browser_activity_events.synthetic.json --claims tests/fixtures/small/browser_activity_claims.synthetic.json --metadata tests/fixtures/small/browser_activity_events.synthetic.metadata.json
+```
+
+Windows PowerShell:
+
+```powershell
+$env:PYTHONPATH="src"; python -m traceback_app.cli --validator browser-activity --events tests/fixtures/small/browser_activity_events.synthetic.json --claims tests/fixtures/small/browser_activity_claims.synthetic.json --metadata tests/fixtures/small/browser_activity_events.synthetic.metadata.json
+```
+
+Browser activity currently supports Chromium-family normalized browser history data, such as Chrome, Edge, and Chromium. Firefox support is future scope.
+
+### 8. Where to find more demo/test data
+
+TraceBack includes more built-in test data in this folder:
+
+```text
+tests/fixtures/
+```
+
+Inside that folder:
+
+- `small/` has simple examples.
+- `large/` has noisy examples with extra background records.
+- `diverse/` has generated examples with different result mixes.
+- `malformed/` has intentionally broken examples used to test error messages.
+
+The Streamlit UI currently lets you choose from bundled demo fixture pairs only. It does not currently let you upload or browse for your own files.
+
+If you want to try your own data, use the CLI instead. Your files need to be normalized JSON records that match one of the current validator types.
+
+The `malformed/` folder is mainly for testing how TraceBack explains bad input. It is normal for those files to produce error messages.
+
+### 9. Force the CLI to print JSON
+
+By default, the CLI prints a human-readable Markdown-style report.
+
+To force machine-readable JSON output, add:
+
+```text
+--print-json
+```
+
+Example for macOS, Linux, or WSL:
+
+```bash
+PYTHONPATH=src python3 -m traceback_app.cli \
+  --validator browser-activity \
+  --events tests/fixtures/small/browser_activity_events.synthetic.json \
+  --claims tests/fixtures/small/browser_activity_claims.synthetic.json \
+  --metadata tests/fixtures/small/browser_activity_events.synthetic.metadata.json \
+  --print-json
+```
+
+Windows Command Prompt:
+
+```bat
+set PYTHONPATH=src && python -m traceback_app.cli --validator browser-activity --events tests/fixtures/small/browser_activity_events.synthetic.json --claims tests/fixtures/small/browser_activity_claims.synthetic.json --metadata tests/fixtures/small/browser_activity_events.synthetic.metadata.json --print-json
+```
+
+Windows PowerShell:
+
+```powershell
+$env:PYTHONPATH="src"; python -m traceback_app.cli --validator browser-activity --events tests/fixtures/small/browser_activity_events.synthetic.json --claims tests/fixtures/small/browser_activity_claims.synthetic.json --metadata tests/fixtures/small/browser_activity_events.synthetic.metadata.json --print-json
+```
+
+JSON is useful if you want another tool or script to read the validation results.
+
+### 10. Save JSON to a file
+
+To save the JSON report to a file, use:
+
+```text
+--json-output filename.json
+```
+
+Example for macOS, Linux, or WSL:
+
+```bash
+PYTHONPATH=src python3 -m traceback_app.cli \
+  --validator logon \
+  --events tests/fixtures/small/windows_logon_events.synthetic.json \
+  --claims tests/fixtures/small/windows_logon_claims.synthetic.json \
+  --json-output traceback-logon-report.json
+```
+
+Windows Command Prompt:
+
+```bat
+set PYTHONPATH=src && python -m traceback_app.cli --validator logon --events tests/fixtures/small/windows_logon_events.synthetic.json --claims tests/fixtures/small/windows_logon_claims.synthetic.json --json-output traceback-logon-report.json
+```
+
+Windows PowerShell:
+
+```powershell
+$env:PYTHONPATH="src"; python -m traceback_app.cli --validator logon --events tests/fixtures/small/windows_logon_events.synthetic.json --claims tests/fixtures/small/windows_logon_claims.synthetic.json --json-output traceback-logon-report.json
+```
+
+This creates a file named:
+
+```text
+traceback-logon-report.json
+```
+
+in the current folder.
+
+### 11. Show the Markdown preview explicitly
+
+The CLI can show a human-readable Markdown preview with:
+
+```text
+--preview
+```
+
+Example for macOS, Linux, or WSL:
+
+```bash
+PYTHONPATH=src python3 -m traceback_app.cli \
+  --validator prefetch-process \
+  --events tests/fixtures/small/windows_prefetch_process_events.synthetic.json \
+  --claims tests/fixtures/small/windows_prefetch_process_claims.synthetic.json \
+  --preview
+```
+
+Windows Command Prompt:
+
+```bat
+set PYTHONPATH=src && python -m traceback_app.cli --validator prefetch-process --events tests/fixtures/small/windows_prefetch_process_events.synthetic.json --claims tests/fixtures/small/windows_prefetch_process_claims.synthetic.json --preview
+```
+
+Windows PowerShell:
+
+```powershell
+$env:PYTHONPATH="src"; python -m traceback_app.cli --validator prefetch-process --events tests/fixtures/small/windows_prefetch_process_events.synthetic.json --claims tests/fixtures/small/windows_prefetch_process_claims.synthetic.json --preview
+```
+
+### 12. Try the Streamlit review UI
+
+TraceBack also includes a Streamlit review/demo interface.
+
+From the project folder, run:
+
+```bash
+UV_LINK_MODE=copy uv run streamlit run streamlit_app.py
+```
+
+Streamlit will print a local URL that usually looks like:
+
+```text
+Local URL: http://localhost:8501
+```
+
+Open that URL in your browser.
+
+In the Streamlit UI, you can:
+
+- select an evidence type
+- select a specific evidence file with its paired claims/assertions file
+- run deterministic validation
+- review supported, contradicted, and unsupported / insufficient evidence results
+- download Markdown and JSON reports
+- use browser Print / Save as PDF
+
+If the browser does not open automatically, copy the `Local URL` from the terminal and paste it into your browser.
+
+To stop Streamlit, go back to the terminal and press:
+
+```text
+Ctrl+C
+```
+
+### 13. What results should you expect?
+
+The built-in demo fixtures are designed to show a mix of outcomes:
+
+```text
+supported
+contradicted
+insufficient_evidence
+```
+
+These statuses mean:
+
+- `supported`: matching evidence agrees with the claim
+- `contradicted`: matching evidence exists, but it conflicts with the claim
+- `insufficient_evidence`: TraceBack did not find enough matching evidence to prove the claim
+
+This is intentional. TraceBack is not trying to mark everything as true. It is checking whether the available evidence supports, contradicts, or cannot prove each claim.
 
 ## Future scope
 
