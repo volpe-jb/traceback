@@ -8,6 +8,7 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+from zoneinfo import available_timezones
 
 from traceback_app.claims.schema import ValidationResult
 from traceback_app.evidence.loaders import (
@@ -106,6 +107,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Print the human-readable Markdown validation report preview.",
     )
+    parser.add_argument(
+        "--list-timezones",
+        action="store_true",
+        help="Print available IANA timezone names for report/export timestamps, then exit.",
+    )
     return parser
 
 
@@ -114,6 +120,9 @@ def main(argv: list[str] | None = None) -> int:
 
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.list_timezones:
+        _print_available_timezones()
+        return 0
     _apply_demo_defaults(args)
 
     if not args.events or not args.claims:
@@ -174,6 +183,12 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     return 0
+
+
+def _print_available_timezones() -> None:
+    print("UTC")
+    for timezone_name in sorted(name for name in available_timezones() if name != "UTC"):
+        print(timezone_name)
 
 
 def _apply_demo_defaults(args: argparse.Namespace) -> None:

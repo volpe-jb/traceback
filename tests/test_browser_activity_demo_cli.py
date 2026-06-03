@@ -44,6 +44,20 @@ def test_cli_browser_activity_demo_writes_json_report_without_markdown_preview_b
     )
 
 
+def test_cli_list_timezones_prints_iana_names_without_requiring_evidence(capsys):
+    exit_code = cli.main(["--list-timezones"])
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "UTC" in captured.out
+    assert "America/Chicago" in captured.out
+    assert "Europe/London" in captured.out
+    assert "Asia/Tokyo" in captured.out
+    assert "Australia/Sydney" in captured.out
+    assert "--events and --claims are required" not in captured.err
+
+
 def test_cli_preview_flag_prints_markdown_validation_report(capsys, tmp_path):
     output_path = tmp_path / "reports" / "browser-activity-demo-report.json"
 
