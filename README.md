@@ -160,6 +160,14 @@ prefetch-process
 browser-activity
 ```
 
+To list available IANA timezone names for future report/export timestamp selection, run:
+
+```bash
+PYTHONPATH=src python3 -m traceback_app.cli --list-timezones
+```
+
+This prints names such as `UTC`, `America/Chicago`, `Europe/London`, `Asia/Tokyo`, and `Australia/Sydney`. The timezone list is for report/export timestamp metadata only; evidence timestamps and evidence data are not changed.
+
 ## Run the Streamlit review GUI
 
 The Streamlit GUI is a judge-friendly review/demo interface, not a replacement for the deterministic CLI or validation core.
@@ -209,6 +217,7 @@ GUI v0.1 currently lets you:
   - Browser activity evidence
 - select a specific evidence file with its paired claims/assertions file
 - choose small synthetic, large noisy synthetic, and generated diverse fixture pairs where available
+- choose a report/export timestamp timezone from a drop-down of IANA timezone names
 - view the selected claim/assertion set
 - run deterministic validation
 - review evidence checks grouped by type
@@ -226,6 +235,8 @@ GUI v0.1 currently lets you:
 - use fixed-size report controls for Markdown, JSON, and browser Print / Save as PDF
 
 The GUI does not call an LLM, does not require an API key, and does not implement the future AI reviewer loop.
+
+The GUI timezone drop-down is for report/export timestamps only, including generated filenames and browser Print / Save as PDF title hints. It does not alter, convert, normalize, or reinterpret evidence timestamps or evidence data.
 
 The Streamlit GUI is intentionally concise for demo and judging use. It emphasizes status callouts, expected-vs-observed evidence details, compact provenance, and exportable reports rather than exposing every internal validation detail by default.
 
